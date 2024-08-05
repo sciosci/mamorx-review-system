@@ -1,0 +1,32 @@
+
+
+    1. Claims: Do the main claims made in the abstract and introduction accurately reflect the paper's contributions and scope? Claims in the paper should match theoretical and experimental results in terms of how much the results can be expected to generalize. The paper's contributions should be clearly stated in the abstract and introduction, along with any important assumptions and limitations. It is fine to include aspirational goals as motivation as long as it is clear that these goals are not attained by the paper. Enter yes, no, or an explanation if appropriate. Answers are visible to reviewers. Claims in the paper should match theoretical and experimental results in terms of how much the results can be expected to generalize.
+
+        The paper's contributions should be clearly stated in the abstract and introduction, along with any important assumptions and limitations. It is fine to include aspirational goals as motivation as long as it is clear that these goals are not attained by the paper.
+
+    Limitations: The authors are encouraged to create a separate "Limitations" section in their paper. The paper should point out any strong assumptions and how robust the results are to violations of these assumptions (e.g., independence assumptions, noiseless settings, model well-specification, asymptotic approximations only holding locally).
+
+    The authors should reflect on how these assumptions might be violated in practice and what the implications would be.
+
+    The authors should reflect on the scope of the claims made, e.g., if the approach was only tested on a few datasets or with a few runs. In general, empirical results often depend on implicit assumptions, which should be articulated.
+
+    The authors should reflect on the factors that influence the performance of the approach. For example, a facial recognition algorithm may perform poorly when image resolution is low or images are taken in low lighting. Or a speech-to-text system might not be used reliably to provide closed captions for online lectures because it fails to handle technical jargon.
+
+    We understand that authors might fear that complete honesty about limitations might be used by reviewers as grounds for rejection. It is worth keeping in mind that a worse outcome might be if reviewers discover limitations that aren't acknowledged in the paper. In general, we advise authors to use their best judgement and recognize that individual actions in favor of transparency play an important role in developing norms that preserve the integrity of the community. Reviewers will be specifically instructed to not penalize honesty concerning limitations.
+
+       The answer NA means that the paper has no limitation while the answer No means that the paper has limitations, but those are not discussed in the paper.
+
+    2. Theory, Assumptions and Proofs: If you are including theoretical results, did you state the full set of assumptions of all theoretical results, and did you include complete proofs of all theoretical results? All assumptions should be clearly stated or referenced in the statement of any theorems. The proofs can either appear in the main paper or the supplemental material, but if they appear in the supplemental material, authors are encouraged to provide a short proof sketch to provide intuition. Enter yes, no, n/a, or an explanation if appropriate. Answers are visible to reviewers.
+
+    Did you state the full set of assumptions of all theoretical results? All assumptions should be clearly stated or referenced in the statement of any theorems.
+
+    Did you include complete proofs of all theoretical results? The proofs can either appear in the main paper or the supplemental material, but if they appear in the supplemental material, authors are encouraged to provide a short proof sketch to provide intuition. You are encouraged to discuss the relationship between your results and related results in the literature. 
+
+    Inversely, any informal proof provided in the core of the paper should be complemented by formal proofs provided in appendix or supplemental material.
+
+    Theorems and Lemmas that the proof relies upon should be properly referenced.
+
+    3.Quality: Is the submission technically sound? Are claims well supported (e.g., by theoretical analysis or experimental results)? Are the methods used appropriate? Is this a complete piece of work or work in progress? Are the authors careful and honest about evaluating both the strengths and weaknesses of their work
+      Clarity: Is the submission clearly written? Is it well organized? (If not, please make constructive suggestions for improving its clarity.) Does it adequately inform the reader? (Note that a superbly written paper provides enough information for an expert reader to reproduce its results.)
+
+    

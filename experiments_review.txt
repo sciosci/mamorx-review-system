@@ -1,0 +1,1 @@
+The experimental section of the paper needs to include detailed descriptions of data splits, hyperparameters, and reproducibility steps. Statistical significance is adequately addressed but could benefit from more transparency. Compute resources are well-documented.
