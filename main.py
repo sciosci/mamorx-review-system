@@ -1,16 +1,20 @@
 import os
 from dotenv import load_dotenv
 from crewai import Agent, Task, Crew, Process
+
+from model import load_model, list_avail_models
+from SemanticScholar import SemanticScholar
+
 # from crewai_tools import BrowserbaseLoadTool
-paper_path_1 = os.path.abspath("/Users/harry/Desktop/SOS/agent/crew_ai_agent_project/paper_1.txt")
+paper_path_1 = 'data/paper_section_1.txt'
 
-paper_path_2 = os.path.abspath("/Users/harry/Desktop/SOS/agent/crew_ai_agent_project/paper_2.txt")
+paper_path_2 = 'data/paper_section_2.txt'
 
-paper_path_3 = os.path.abspath("/Users/harry/Desktop/SOS/agent/crew_ai_agent_project/paper_3.txt")
+paper_path_3 = 'data/paper_section_3.txt'
 
-paper_path_4 = os.path.abspath("/Users/harry/Desktop/SOS/agent/crew_ai_agent_project/paper_4.txt")
+paper_path_4 = 'data/paper_section_4.txt'
 
-reviewer_system_prompt_path = os.path.abspath("/Users/harry/Desktop/SOS/agent/crew_ai_agent_project/reviewer_system_prompt.txt")
+reviewer_system_prompt_path = 'data/reviewer_system_prompt.txt'
 
 # guideline_path1 = os.path.abspath("/Users/harry/Desktop/SOS/agent/crew_ai_agent_project/experiments_guidelines.txt")
 # guideline_path2 = os.path.abspath("/Users/harry/Desktop/SOS/agent/crew_ai_agent_project/limitation_guidelines.txt")
@@ -42,12 +46,18 @@ with open(reviewer_system_prompt_path, 'r') as file:
 
 
 load_dotenv()
-os.environ['OPENAI_API_KEY'] = os.getenv('OPENAI_API_KEY')
-os.environ['OPENAI_MODEL_NAME'] = os.getenv('OPENAI_MODEL_NAME')
-os.environ['BROWSERBASE_API_KEY'] = 'BROWSERBASE_API_KEY'
-os.environ['BROWSERBASE_PROJECT_ID'] = 'BROWSERBASE_PROJECT_ID'
+# os.environ['OPENAI_API_KEY'] = os.getenv('OPENAI_API_KEY')
+# os.environ['OPENAI_MODEL_NAME'] = os.getenv('OPENAI_MODEL_NAME')
+# os.environ['BROWSERBASE_API_KEY'] = 'BROWSERBASE_API_KEY'
+# os.environ['BROWSERBASE_PROJECT_ID'] = 'BROWSERBASE_PROJECT_ID'
 
 # web_tool = BrowserbaseLoadTool()
+
+
+# list_avail_models()
+ss_tool = SemanticScholar()
+model_id = "anthropic.claude-3-5-sonnet-20240620-v1:0"
+llm = load_model(model_id)
 
 print(" ## Welcome to paper reviewer")
 
@@ -57,30 +67,42 @@ leader_agent = Agent(
     backstory= """
          You are part of a group that needs to perform tasks that involve a scientific paper. However, the paper is very long, so each agent has only been given part of it. You are the leader in charge of interacting with the user and coordinating the group to accomplish tasks. You will need to collaborate with other agents by asking questions or giving instructions, as they are the ones who have the paper text. In some tasks, you will be asked to aggregate the review from all agents and provide feedback to them.
     """,
+    llm=llm
 )
 
 agent_1 = Agent(
     role='agent_1',
     goal="Help review a scientific paper, especially the part assigned to you. Be ready to answer questions from the leader and look for the answer from the text assigned to you.",
     backstory=f"{reviewer_system_prompt}",
+    llm=llm
 )
 
 agent_2 = Agent(
     role='agent_2',
     goal="Help review a scientific paper, especially the part assigned to you. Be ready to answer questions from the leader and look for the answer from the text assigned to you.",
     backstory=f"{reviewer_system_prompt}",
+    llm=llm
 )
 
 agent_3 = Agent(
     role='agent_3',
     goal="Help review a scientific paper, especially the part assigned to you. Be ready to answer questions from the leader and look for the answer from the text assigned to you.",
     backstory=f"{reviewer_system_prompt}",
+    llm=llm
 )
 
 agent_4 = Agent(
     role='agent_4',
     goal="Help review a scientific paper, especially the part assigned to you. Be ready to answer questions from the leader and look for the answer from the text assigned to you.",
     backstory=f"{reviewer_system_prompt}",
+    llm=llm
+)
+
+novelty_agent = Agent(
+    role='novalty_agent',
+    goal="Review the novelty of this paper based on retrieved top ranked 10 related papers ",
+    llm=llm,
+    tool=[ss_tool]
 )
 
 expert_agent = Agent(
@@ -91,6 +113,7 @@ expert_agent = Agent(
         ...
         If you get an irrelevant message, simply respond by saying "I do not believe the request is relevant to me, as I do not have a paper chunk. I will stand by for further instructions."
     """,
+    llm=llm,
     verbose=True
 )
 
