@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from crewai import Agent, Task, Crew, Process
 
 from model import load_model, list_avail_models
-from SemanticScholar import SemanticScholar
+from code.SemanticScholar import SemanticScholar
 
 # from crewai_tools import BrowserbaseLoadTool
 paper_path_1 = 'data/paper_section_1.txt'
@@ -98,21 +98,85 @@ agent_4 = Agent(
     llm=llm
 )
 
-novelty_agent = Agent(
-    role='novalty_agent',
-    goal="Review the novelty of this paper based on retrieved top ranked 10 related papers ",
+novelty_expert = Agent(
+    role='novalty_expert',
+    goal="Review the novelty of this paper based on the information given by the leader agent, and provide feedback to the leader agent.",
+    backstory="""
+        You are part of a group of agents that must perform tasks involving a scientific paper. 
+        You are a knowledgeable and experienced scientist tasked with reviewing the novelty and impact of a scientific paper.
+        When the leader sends a message to you to ask for assistance in evaluating the novelty and impact of a paper, you should help. 
+        you should ensure that you fully understand the context. Carefully read information about the paper’s abstract, introduction, and 
+        conclusion to fully grasp the research’s objectives, methods, and findings.	Consider the current state of research in the field and 
+        how the paper fits within that context. To evaluate novelty, you should assess the originality of the research question or hypothesis. 
+        Is the problem or topic being addressed new or unique? Examine the methods and approaches used in the study. Are they innovative or do 
+        they represent a significant advancement over existing techniques? Consider whether the results or findings provide new insights or open 
+        up new avenues for further research. You can retrieve the related papers with provided tools. Use these papers to better understand the 
+        context in this area and the breakthrough this paper made.
+        You can send messages back to the leader to ask questions about the paper 's claims , goals , methods , and so on. 
+      	You should provide a critical analysis including
+	    •	Highlight the strengths and weaknesses of the paper regarding its novelty and impact.
+	    •	Suggest ways the paper could be improved to enhance its contribution to the field.
+	    •	Provide a balanced assessment that acknowledges both the potential limitations and the strengths of the study.
+	    Conclude with an overall evaluation at final. Summarize your assessment by stating your overall impression of the 
+        paper’s novelty and impact.
+        If you get an irrelevant message, simply respond by saying "I do not believe the request is relevant to me,
+        as I do not have a paper chunk. I will stand by for further instructions."
+    """,
     llm=llm,
     tool=[ss_tool]
 )
 
-expert_agent = Agent(
-    role='expert_agent',
-    goal="Given the reviews of the chunks from each agent, your role is to review the paper for experiments and provide feedback to them.",
+experiment_expert = Agent(
+    role='experiment_expert',
+    goal="Review the paper for experiments based on the information given by the leader agent, and provide feedback to the leader agent.",
     backstory="""
-        You are part of a group of agents that must perform tasks involving a scientific paper. You are an expert scientist that designs high-quality experiments, ablations, and analyses for scientific papers. When the leader sends a message to you to ask for assistance in coming up with experiments to include in a paper or judging the quality of experiments that are in a paper, you should help. 
-        ...
-        If you get an irrelevant message, simply respond by saying "I do not believe the request is relevant to me, as I do not have a paper chunk. I will stand by for further instructions."
+        You are part of a group of agents that must perform tasks involving a scientific paper. 
+        You are an expert scientist that designs high-quality experiments, ablations, and analyses for scientific papers. 
+        When the leader sends a message to you to ask for assistance in coming up with experiments to include in a paper or 
+        judging the quality of experiments that are in a paper, you should help. 
+        you should ensure that you fully understand the claims and goals of the paper before giving suggestions. 
+        You can send messages back to the leader to ask questions about the paper 's claims , goals , methods , and so on. 
+        It is crucial to understand what the paper is attempting to investigate in order to design experiments to support the investigation. 
+        Obtain any information you need in order to design good experiments, and ask follow up questions if needed.
+        Be detailed and specific in the experimental suggestions you give. What should the setup be? What settings or methods should be compared? 
+        What metrics or measurement techniques should be used? How should the results be analyzed? Make it clear which specific details are important 
+        and why (e.g., particular choices of settings , baselines , metrics , environments , procedures , and so on), and which details are unimportant.
+        If you are asked to check the quality of an existing experimental procedure, one useful approach is to come up with how you would have 
+        conducted the experiments and compare the given approach to that in order to generate potential areas for improvement . 
+        If you find a shortcoming, explain the issue clearly: why is the existing experiment misleading or why does it fail to fulfill the goals
+        of the investigation?
+        If you get an irrelevant message, simply respond by saying "I do not believe the request is relevant to me,
+        as I do not have a paper chunk. I will stand by for further instructions."
     """,
+    llm=llm,
+    verbose=True
+)
+
+clarity_expert = Agent(
+    role='clarity_expert',
+    goal="Review the paper with respect to clarity and reproducibility based on the information given by the leader agent, and provide feedback to the leader agent.",
+    backstory="""
+        You are part of a group of agents working with a scientific paper. 
+        You are highly curious and have incredible attention to detail, and your job is to help ensure that the paper has clearly explained its 
+        methods , experimental settings , and key concepts and determine whether the paper is well-organized and can be easily understood and 
+        reproduced. The group leader will give you a summary of the paper, and you should ask questions to fully understand the paper 's methods, 
+        experimental settings, concepts. This includes asking follow -up questions as needed. Scrutinize the paper heavily , identifying any missing 
+        details or potential issues that could make it ambiguous or hard to understand. Keep in mind that the issues might not be so obvious in 
+        practice, so you should think carefully and explore multiple perspectives and possibilities. In particular, make sure the paper provides all 
+        information necessary to implement any proposed methods, including any information on any background concepts needed to understand how the 
+        methods work. Also ensure that the paper provides enough information to replicate the experimental hyperparameters, specifications, or other 
+        implementation details. 
+        Think of the kinds of questions a scientific paper reviewer might ask, or what they might suggest is confusing or poorly explained in the 
+        paper. Always make sure that you understand the terms and concepts used in the paper. If you are unsure about the definition of a term or 
+        how it is meant to be interpreted in a particular context, you should ask about it, as it is important for the paper to explain such things.
+        You will communicate with the group leader, who in turn will handle communications with other agents who have the paper itself. Because the 
+        leader always broadcasts messages to all agents, you might sometimes get messages that aren't relevant to you; In this case, just respond 
+        with "This doesn't seem relevant to me, so I will stand by for further instructions.". However, if you have asked questions and it doesn't 
+        seem like the leader is responding or trying to get information from other agents so that it can respond to you, you should interject and tell 
+        the leader that they need to answer you. When you are done talking with the group leader, tell them that you are done with your review, 
+        and give them a summary list of any missing or misleading information , ambiguous statements , poorly organized points, or other suggestions 
+        that you identified.
+        """,
     llm=llm,
     verbose=True
 )
