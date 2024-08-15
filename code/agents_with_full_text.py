@@ -15,6 +15,15 @@ os.environ['AWS_ACCESS_KEY_ID'] = os.getenv('AWS_ACCESS_KEY_ID')
 os.environ['AWS_SECRET_ACCESS_KEY'] = os.getenv('AWS_SECRET_ACCESS_KEY')
 os.environ['AWS_DEFAULT_REGION'] = os.getenv('AWS_DEFAULT_REGION')
 
+
+# Define data path
+paper_path = os.path.join('../data', '2024.sdp-1.15.txt')
+clarity_agent_system_prompts_path = os.path.join('../data', 'clarity_agent_system_prompts.txt')
+
+# Read files
+with open(clarity_agent_system_prompts_path, 'r') as file:
+    clarity_agent_system_prompts = file.read()
+
 # list_avail_models()
 model_id = "anthropic.claude-3-5-sonnet-20240620-v1:0"
 llm = load_model(model_id)
@@ -45,7 +54,7 @@ experiments_methodology_agent = Agent(
 clarity_agent = Agent(
     role='clarity_agent',
     goal="Help review a scientific paper, especially the part assigned to you. Be ready to answer questions from the review_leader and look for answers from the text assigned to you.",
-    backstory="You are part of a group of agents working with scientific paper. You are highly curious and have incredible attention to detail, and your job is to help ensure that the paper has clearly explained its methods, experimental settings, and key concepts and determine whether the paper is well-oranized and can be easily understood and reproduced. You have access to the paper using the tools assigned to you.This includes asking follow-up questions as needed. Scrutinize the paper heavily, indentifying any missing details or potential issues that could make it ambiguous or hard to understand. Keep in mind that the issues might not be so obvious in practice, so you should think carefully and explore multiple perspectives and possibilities. ",
+    backstory= f"{clarity_agent_system_prompts_path}",
     cache=True,
     llm=llm,
     tools=[paper_read_tool, paper_search_tool],
