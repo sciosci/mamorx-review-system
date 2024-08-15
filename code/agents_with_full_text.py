@@ -20,7 +20,9 @@ model_id = "anthropic.claude-3-5-sonnet-20240620-v1:0"
 llm = load_model(model_id)
 
 # Initialize tools
-paper_path = os.path.abspath("/Users/harry/Desktop/SOS/agent/crew_ai_agent_project/daniel_2024_paper.txt")
+# Set the paper path
+# paper_path = Your Path
+
 paper_read_tool = FileReadTool(file_path=paper_path)
 paper_search_tool = TXTSearchTool(txt = paper_path)
 
