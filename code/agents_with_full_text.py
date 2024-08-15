@@ -17,7 +17,7 @@ os.environ['AWS_DEFAULT_REGION'] = os.getenv('AWS_DEFAULT_REGION')
 
 
 # Define paths
-base_dir = 'data'
+base_dir = '../data'
 file_paths = {
     'testing_paper': '2024.sdp-1.15.txt',
     'clarity_agent_system_prompts': 'clarity_agent_system_prompts.txt',
