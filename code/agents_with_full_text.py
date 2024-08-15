@@ -21,7 +21,9 @@ base_dir = '../data'
 file_paths = {
     'testing_paper': '2024.sdp-1.15.txt',
     'clarity_agent_system_prompts': 'clarity_agent_system_prompts.txt',
-    'experiments_methodology_agent_system_prompts': 'experiments_methodology_agent_system_prompts.txt'
+    'experiments_methodology_agent_system_prompts': 'experiments_methodology_agent_system_prompts.txt',
+    'leader_system_prompts': 'leader_system_prompts.txt',
+    'manager_system_prompts': 'manager_system_prompts.txt'
 }
 
 full_paths = {key: os.path.join(base_dir, file_name) for key, file_name in file_paths.items()}
@@ -30,6 +32,8 @@ full_paths = {key: os.path.join(base_dir, file_name) for key, file_name in file_
 testing_paper_path = full_paths['testing_paper']
 clarity_agent_system_prompts_path = full_paths['clarity_agent_system_prompts']
 experiments_methodology_agent_system_prompts_path = full_paths['experiments_methodology_agent_system_prompts']
+leader_system_prompts_path = full_paths['leader_system_prompts']
+manager_system_prompts_path = full_paths['manager_system_prompts']
 
 
 # Read files
@@ -46,7 +50,8 @@ file_contents = read_files(full_paths)
 testing_paper = file_contents['testing_paper']
 clarity_agent_system_prompts = file_contents['clarity_agent_system_prompts']
 experiments_methodology_agent_system_prompts= file_contents['experiments_methodology_agent_system_prompts']
-
+leader_system_prompts = file_contents['leader_system_prompts']
+manager_system_prompts = file_contents['manager_system_prompts']
 
 # list_avail_models()
 model_id = "anthropic.claude-3-5-sonnet-20240620-v1:0"
@@ -98,7 +103,7 @@ impact_agent = Agent(
 reviewer_leader = Agent(
     role='reviewer_leader',
     goal="To orchestrate and write peer-review style comments for a scientific paper as a peer-reviewer would. (Paper not written by you)",
-    backstory="You are a part of a group that needs to perform ataks that involves a scientific paper.You are the leader in charge of interacting with the user and coordinating the group to accomplish tasks. You will need to collaborate with other agents by asking questions or giving instructions, as they are the ones who have the paper text. Other agents do not know anything about the task being performed, so it is your responsibility tot convey any information about that task that is necessary for them to provide helpful responses. You may need multiple to do multiple rounds of communications to exchange all the necessary information; you should follow up with other agents if they provide a bad response or seem to have misunderstood the task. In addition, because other agents can only communicate with you but not each other, you may need to help relay information between agents. Because each agent will be reviewing the paperfocusing on different angles, your role is to aggregate their opinions together. In addition, depending on the responses you receive, you may need to ask follow-up questions, clarify your requests,or engage in additional discussion to fully reason about the task. To reduece communication errors, after you send a message you should write a short description of what you expect the response to look like. If the reponse you get doesn't match your expectation, you should review it and potentially ask follow-up questions to check if any mistakes or miscommunications have occurred. It could be the case that an agent (including yourself) has misread something or made a logic error. At the beginning of your task, you should draft a high-level plan with a lists of steps, but the plan needs not to be too complex, it should have maxmially 4 steps in total, concisely describing how you will approach the task. Following the steps in the reviewing process and generate the final review.",
+    backstory=f"{leader_system_prompts}",
     cache=True,
     verbose=True,
     llm=llm,
@@ -109,7 +114,7 @@ reviewer_leader = Agent(
 manager = Agent(
     role='manager',
     goal="To coordinate and manage the workflow of the review process",
-    backstory="You are a part of a group that needs to perform ataks that involves a scientific paper. You are the review manager in charge of control the workflow of the review process. You will coordinate the interaction between the reviewer_leader and other agents, bridging their communications. Your should make sure that this workflow is carried out following the high-level plan drafted by the reviewer_leader. Please ask them to not write anything yet for those tasks before the reviewer_leader has a plan.You should also make sure that the messages from the reviewer_leader agent can be delivered to the worker agents and vice versa. Agent Info: There are 4 agents in the group, excluding yourself since you're the manager, the other agents are 'clarity_agent', 'impact_agent', 'experiments_agent', and 'reviewer_leader'.",
+    backstory=f"{manager_system_prompts}",
     cache=True,
     verbose=True,
     llm=llm,
