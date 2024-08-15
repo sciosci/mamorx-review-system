@@ -23,11 +23,15 @@ llm = load_model(model_id)
 # Set the paper path
 # paper_path = Your Path
 
+# A tool that helps agent read files (supposedly)
 paper_read_tool = FileReadTool(file_path=paper_path)
+
+# A tool that helps agent do RAG text search (supposedly) 
 paper_search_tool = TXTSearchTool(txt = paper_path)
 
 
 
+# Define agents
 experiments_methodology_agent = Agent(
     role='experiments_methodology_agent',
     goal="Help review a scientific paper, especially focusing the clarity of the paper. Be ready to answer questions from the review_leader and look for answers from the text assigned to you.",
@@ -68,6 +72,7 @@ reviewer_leader = Agent(
     tools=[paper_read_tool, paper_search_tool]
 )
 
+# Define the manager agent
 manager = Agent(
     role='manager',
     goal="To coordinate and manage the workflow of the review process",
@@ -77,6 +82,8 @@ manager = Agent(
     llm=llm,
 )
 
+
+# Define high-level Tasks
 leader_task = Task(
     description="You can access the paper using 'paper_read_tool' and searching for specific things in the text using 'paper_search_tool' to avoid accessing the whole paper and focus on some specific section of the paper to avoid viewing the paper everytime, which is costly. Task: Write a list of feedback comments, similar to the suggestions a reviewer might make. In addition, focus on major comments rather than minor comments; major comments are important things that affect the overall impact of the paper, whereas minor comments are small things like grammar check. Be specific in your suggestions, including details about method or resource names and any particular steps the authors should follow. However, don't suggest things that are already included/addressed in the paper. Remember that you can collaborate if necessary. If you want to write comments and/or ask for additional ones, you may want to provide your original comments to that the agent knows what was going on. Your review comments should be specific and express an appropriate level of importance. A comment like 'the authors should add more details about the proposed methods, such as XXX' is bad because it is too generic. Even for a paper with a good method description it is always possible to add more details. This review process should follow the high-level plan you have created. Agent information: There are 4 agents in the group, including yourself. You are 'reviewer_leader', the other agents are 'clarity_agent', 'impact_agent', and 'experiments_methodology_agent'.Each agent has a specific focus in the review process, and you should coordinate their efforts to ensure that the review is thorough and comprehensive.",
     expected_output="A final list of feedback comments resembling that of the peer-reviews for scientific papers.",
@@ -106,6 +113,7 @@ experiments_methodology_tasks = Task(
 )
 
 
+# Set Crew and kickoff
 review_crew = Crew(
     tasks=[leader_task, clarity_agent_tasks, impact_agent_tasks, experiments_methodology_tasks],
     agents=[impact_agent,reviewer_leader, experiments_methodology_agent, clarity_agent],
