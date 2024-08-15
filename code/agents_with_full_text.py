@@ -17,12 +17,36 @@ os.environ['AWS_DEFAULT_REGION'] = os.getenv('AWS_DEFAULT_REGION')
 
 
 # Define data path
-paper_path = os.path.join('../data', '2024.sdp-1.15.txt')
-clarity_agent_system_prompts_path = os.path.join('../data', 'clarity_agent_system_prompts.txt')
+base_dir = '../data'
+file_paths = {
+    'testing_paper': '2024.sdp-1.15.txt',
+    'clarity_agent_system_prompts': 'clarity_agent_system_prompts.txt',
+    'experiments_methodology_agent_system_prompts': 'experiments_methodology_agent_system_prompts.txt'
+}
+
+full_paths = {key: os.path.join(base_dir, file_name) for key, file_name in file_paths.items()}
+
+# Access individual paths
+testing_paper_path = full_paths['testing_paper']
+clarity_agent_system_prompts_path = full_paths['clarity_agent_system_prompts']
+experiments_methodology_agent_system_prompts_path = full_paths['experiments_methodology_agent_system_prompts']
+
 
 # Read files
-with open(clarity_agent_system_prompts_path, 'r') as file:
-    clarity_agent_system_prompts = file.read()
+def read_files(paths):
+    contents = {}
+    for key, path in paths.items():
+        with open(path, 'r') as file:
+            contents[key] = file.read()
+    return contents
+
+file_contents = read_files(full_paths)
+
+# Access the contents
+testing_paper = file_contents['testing_paper']
+clarity_agent_system_prompts = file_contents['clarity_agent_system_prompts']
+experiments_methodology_agent_system_prompts= file_contents['experiments_methodology_agent_system_prompts']
+
 
 # list_avail_models()
 model_id = "anthropic.claude-3-5-sonnet-20240620-v1:0"
@@ -33,10 +57,10 @@ llm = load_model(model_id)
 # paper_path = Your Path
 
 # A tool that helps agent read files (supposedly)
-paper_read_tool = FileReadTool(file_path=paper_path)
+paper_read_tool = FileReadTool(file_path=testing_paper_path)
 
 # A tool that helps agent do RAG text search (supposedly) 
-paper_search_tool = TXTSearchTool(txt = paper_path)
+paper_search_tool = TXTSearchTool(txt = testing_paper_path)
 
 
 
@@ -44,7 +68,7 @@ paper_search_tool = TXTSearchTool(txt = paper_path)
 experiments_methodology_agent = Agent(
     role='experiments_methodology_agent',
     goal="Help review a scientific paper, especially focusing the clarity of the paper. Be ready to answer questions from the review_leader and look for answers from the text assigned to you.",
-    backstory="You are part of a group of agents that must perform tasks involcing a scientific paper. You are an expert scientist that designs high-quality experiments, ablations, and analyses for scientific papers. When the leader sends a message to you to ask for assistance in coming up with experiments to include in a paper or judging the quality of experiments or methodology that are in a paper, you should help. You should make sure that you fully understand the claims and goals of the paper before giving suggestions. You can send messages back to the leader to ask questions about the paper's claims, goals, methods an so on. It is crucial to understand what the paper is attemtpting to support the investigation. Obatain any information you need in order to design good experiments, and ask follow up questions if needed. Be detailed and specific in the experimental (or methods) suggestions you give. What should the setup be? What settings or methods should be compared? What metrics or measurement techniques should be used? How should the results be analyzed? Make it clear which specific details are important and why(e.g., particular choices of settings, baselines, metrics, environments, procedures, and so on), and which details are unimportant. If you aksed to check the quality of an existing experimental procedure, one useful approach is to come up with how you would have conduced the experiments and compare the given approach to that in order to generate potential areas for improvement. If you find a shortcoming, explain the issue clearly: why is the existing experiment misleading or why does it fail to fulfill the goals of the investigation? Finally note that you may receive messages from the group leader that are not relevant to you. This is because the group leader that are not relevant to you. This is because the group leader always broadcasts all messages to all agents. If you get an irrelevant message, simply respond by saying 'I do not believe this request is relevant to me. I will stand by for further instructions.' ",
+    backstory= f"{experiments_methodology_agent_system_prompts}",
     cache=True,
     llm=llm,
     tools=[paper_read_tool, paper_search_tool],
