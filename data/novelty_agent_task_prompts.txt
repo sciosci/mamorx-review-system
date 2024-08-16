@@ -1,0 +1,3 @@
+Task: Access the paper using 'paper_read_tool', 
+and input the title to 'ss_tool' to search for titles and abstracts of up to its top 10 related papers,
+then assess the novelty of input paper compared to other retrieved related papers.

@@ -4,6 +4,7 @@ from crewai import Agent, Task, Crew, Process
 from langchain_openai import ChatOpenAI
 from model import load_model
 from crewai_tools import FileReadTool, TXTSearchTool
+from SemanticScholar import SemanticScholar
 
 
 class MultiAgentWorkflow:
@@ -47,6 +48,7 @@ class MultiAgentWorkflow:
     def setup_tools(self):
         self.paper_read_tool = FileReadTool(file_path=self.full_paths['testing_paper'])
         self.paper_search_tool = TXTSearchTool(txt=self.full_paths['testing_paper'])
+        self.related_paper_tool = SemanticScholar()
 
     def setup_agents(self):
         self.llm = load_model(self.model_id)
@@ -78,13 +80,13 @@ class MultiAgentWorkflow:
             tools=[self.paper_read_tool, self.paper_search_tool],
             )
         
-        self.impact_agent = Agent(
-            role='impact_agent',
-            goal="Help review a scientific paper, especially focusing the clarity of the paper. Be ready to answer questions from the review_leader and look for answers from the text assigned to you.",
+        self.novelty_agent = Agent(
+            role='novelty_agent',
+            goal="Help review a scientific paper, especially focusing the novelty of the paper. Be ready to answer questions from the review_leader and look for answers from the text assigned to you.",
             backstory=self.file_contents['impact_system_prompts'],
             cache=True,
             llm=self.llm,
-            tools=[self.paper_read_tool, self.paper_search_tool],
+            tools=[self.paper_read_tool, self.paper_search_tool, self.related_paper_tool],
             )
         
         self.manager = Agent(
