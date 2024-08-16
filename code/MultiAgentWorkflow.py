@@ -64,7 +64,7 @@ class MultiAgentWorkflow:
 
         self.experiments_methodology_agent = Agent(
             role='experiments_methodology_agent',
-            goal="Help review a scientific paper, especially focusing the clarity of the paper. Be ready to answer questions from the review_leader and look for answers from the text assigned to you.",
+            goal="Help review a scientific paper, especially focusing the experiments/methodology of the paper. Be ready to answer questions from the review_leader and look for answers from the text assigned to you.",
             backstory=self.file_contents['experiments_methodology_agent_system_prompts'],
             cache=True,
             llm=self.llm,
@@ -91,7 +91,7 @@ class MultiAgentWorkflow:
         
         self.manager = Agent(
             role='manager',
-            goal="Help review a scientific paper, especially focusing the clarity of the paper. Be ready to answer questions from the review_leader and look for answers from the text assigned to you.",
+            goal="To coordinate and manage the workflow of the review process, help agents coomunicate by sending the responses from the agents to the reviewer_leader or other agents.",
             backstory=self.file_contents['manager_system_prompts'],
             cache=True,
             llm=self.llm,
