@@ -7,6 +7,11 @@ from crewai_tools import FileReadTool, TXTSearchTool
 from SemanticScholar import SemanticScholar
 
 
+"""
+This is the class that manage a multi-agent workflow. Right now the agents are leader, clarity_agent, experiments_agent, and novelty_agent. The novelty agent is a placeholder
+for the actually implementation using crewai. The main system (to be implemented) should call the class to initiate a review.
+"""
+
 class MultiAgentWorkflow:
     def __init__(self, base_dir='data', model_id="anthropic.claude-3-5-sonnet-20240620-v1:0"):
         self.base_dir = base_dir
