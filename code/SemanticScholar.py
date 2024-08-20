@@ -189,7 +189,11 @@ class SS_keyword_search(BaseTool):
     """
 
     def _run(self, argument: dict) -> list[str]:
-        keywords = argument['keywords']
+        keywords = '+'.join(argument['keywords'])
+        try:
+            print(keywords)
+        except Exception as e:
+            print(f"error: {e}")
         search_url = "https://api.semanticscholar.org/graph/v1/paper/search"
         api_key = os.getenv("X_API_KEY")
         if not api_key:
