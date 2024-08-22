@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from crewai import Agent, Task, Crew, Process
 
 from model import load_model, list_avail_models
-from code.SemanticScholar import SemanticScholar
+from ai_reviewer.SemanticScholar import SemanticScholar
 
 # from crewai_tools import BrowserbaseLoadTool
 paper_path_1 = 'data/paper_section_1.txt'

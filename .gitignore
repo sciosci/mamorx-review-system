@@ -1,5 +1,5 @@
 .env
 __pycache__
-code/__pycache__
-code/db
+ai_reviewer/__pycache__
+ai_reviewer/db
 db
