@@ -118,7 +118,6 @@ class PdfProcessor:
 
 
 if __name__ == '__main__':
-    print(str(PROJECT_HOME / 'output_files/temp'))
-
     processor = PdfProcessor()
-    processor.trial_run("/home/tongzeng/Downloads/test.pdf", keep_temp=True)
+    processor.process_pdf_file("test.pdf")
+    # processor.trial_run("test.pdf", keep_temp=True)
