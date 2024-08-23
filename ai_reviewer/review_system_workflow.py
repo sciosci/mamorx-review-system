@@ -10,15 +10,29 @@ def extract_organized_text(json_data):
     # Ensure we're working with the correct structure
     pdf_parse = json_data.get('pdf_parse', json_data)
 
-    # Extract title
-    title = pdf_parse.get('title', 'Untitled')
-    organized_text += f"Title: {title}\n\n"
+
+    # Extract title by accessing the 'title' key in the JSON data
+    for key in ['title', 'pdf_parse.title']:
+        try:
+            title = json_data
+            for k in key.split('.'):
+                title = title[k]
+                organized_text += f"Title: {title}\n\n"
+        except (KeyError,TypeError):
+            title = 'Unnamed Title'
+            organized_text += f"Title: {title}\n\n"
+            
 
     # Extract abstract
-    if 'abstract' in pdf_parse:
-        organized_text += "Abstract:\n\n"
-        for abstract_item in pdf_parse['abstract']:
-            organized_text += abstract_item['text'] + "\n\n"
+    for key in ['abstract', 'pdf_parse.abstract.text']:
+        try:
+            abstract = json_data
+            for k in key.split('.'):
+                abstract = abstract[k]
+                organized_text += f"Abstract: {abstract}\n\n"
+        except (KeyError,TypeError):
+            abstract = 'No abstract found'
+            organized_text += f"Abstract: {abstract}\n\n"
 
     # Extract body text
     if 'body_text' in pdf_parse:
