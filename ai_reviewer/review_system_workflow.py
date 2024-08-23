@@ -12,27 +12,35 @@ def extract_organized_text(json_data):
 
 
     # Extract title by accessing the 'title' key in the JSON data
+    title = None
     for key in ['title', 'pdf_parse.title']:
         try:
-            title = json_data
+            temp = json_data
             for k in key.split('.'):
-                title = title[k]
-                organized_text += f"Title: {title}\n\n"
+                temp = temp[k]
+            title = temp
+            break
         except (KeyError,TypeError):
-            title = 'Unnamed Title'
-            organized_text += f"Title: {title}\n\n"
+            continue
+
+    organized_text += f"Title: {title or 'No title found'}\n\n"
             
 
     # Extract abstract
+    abstract = None
     for key in ['abstract', 'pdf_parse.abstract.text']:
         try:
-            abstract = json_data
+            temp = json_data
             for k in key.split('.'):
-                abstract = abstract[k]
-                organized_text += f"Abstract: {abstract}\n\n"
+                temp = temp[k]
+            if isinstance(temp, list) and temp and 'text'in temp[0]:
+                abstract = temp[0]['text']
+            elif isinstance(temp, str):
+                abstract = temp
+            break
         except (KeyError,TypeError):
-            abstract = 'No abstract found'
-            organized_text += f"Abstract: {abstract}\n\n"
+            continue
+    organized_text += f"Abstract: {abstract or 'No abstract found'}\n\n"
 
     # Extract body text
     if 'body_text' in pdf_parse:
@@ -77,9 +85,6 @@ class ReviewSystemWorkflow:
         with open(parsed_pdf_path, 'r') as f:
             parsed_pdf_data = json.load(f)
 
-        # Step 2.5: extract the text from the parsed PDF data
-        title = parsed_pdf_data['title']
-
         organized_text = extract_organized_text(parsed_pdf_data)
 
         output_dir = os.path.join(self.base_dir, 'output_files', 'temp')
@@ -87,7 +92,6 @@ class ReviewSystemWorkflow:
         output_file_path = os.path.join(output_dir, 'organized_text.txt')
 
         with open(output_file_path, 'w', encoding='utf-8') as f:
-            f.write(f"Title: {title}\n\n")
             f.write(organized_text)
 
         # Step 3: Initialize the MultiAgentWorkflow
