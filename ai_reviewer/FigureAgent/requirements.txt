@@ -1,5 +1,0 @@
-boto3
-dotenv
-langchain_aws
-crewai
-crewai_tools
