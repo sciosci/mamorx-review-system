@@ -1,6 +1,8 @@
 from MultiAgentWorkflow import MultiAgentWorkflow
 from pdf_processor import PdfProcessor
 from baselines import generate_barebones_review, generate_liang_etal_review
+from FigureTool.FigureTool import FigureTool, PaperArgument, ExtractedFigureCaption
+from anthropic import AnthropicBedrock
 import json
 import os
 
@@ -11,6 +13,12 @@ class ReviewSystemWorkflow:
         self.prompts_file = prompts_file
         self.model_id = model_id
         self.output_dir = os.path.join(self.base_dir, 'output_files', 'generated_reviews')
+        self.figure_tool = FigureTool()
+        self.client = AnthropicBedrock(
+            aws_access_key=os.getenv("AWS_ACCESS_KEY"),  
+            aws_secret_key=os.getenv("AWS_SECRET_KEY"),  
+            aws_region=os.getenv("AWS_REGION")
+        )
         os.makedirs(self.output_dir, exist_ok=True)
 
 
@@ -112,7 +120,7 @@ class ReviewSystemWorkflow:
         with open(parsed_pdf_path, 'r') as f:
             parsed_pdf_data = json.load(f)
 
-        organized_text = self.extract_organized_text(parsed_pdf_data)[0]
+        organized_text, title, abstract, list_of_reference = self.extract_organized_text(parsed_pdf_data)
 
         output_dir = os.path.join(self.base_dir, 'output_files', 'temp')
         os.makedirs(output_dir, exist_ok=True)
@@ -132,6 +140,12 @@ class ReviewSystemWorkflow:
 
         with open(os.path.join(self.output_dir, 'barebones_review.txt'), 'w') as f:
             f.write(barebones_review)
+
+        # Step 3.1 : Assess Image Caption
+        paper_argument = PaperArgument(title=title, abstract=abstract)
+
+        image_caption_dict = self.figure_tool.extract_figures_and_captions(self.pdf_path)
+        image_caption_assessment = self.figure_tool.assess_figures_and_captions(self.client, paper_argument, image_caption_dict)
 
 
         # Step 4: Initialize the MultiAgentWorkflow
