@@ -3,3 +3,8 @@ __pycache__
 ai_reviewer/__pycache__
 ai_reviewer/db
 db
+venv
+ai_reviewer/test.ipynb
+.DS_Store
+ai_reviewer/.DS_Store
+ai_reviewer/.ipynb_checkpoints/
