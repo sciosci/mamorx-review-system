@@ -4,71 +4,6 @@ from baselines import generate_barebones_review, generate_liang_etal_review
 import json
 import os
 
-# def extract_organized_text(json_data):
-#     organized_text = ""
-#     seen_sections = set()
-
-#     # Ensure we're working with the correct structure
-#     pdf_parse = json_data.get('pdf_parse', json_data)
-
-
-#     # Extract title by accessing the 'title' key in the JSON data
-#     title = None
-#     for key in ['title', 'pdf_parse.title']:
-#         try:
-#             temp = json_data
-#             for k in key.split('.'):
-#                 temp = temp[k]
-#             title = temp
-#             break
-#         except (KeyError,TypeError):
-#             continue
-
-#     organized_text += f"Title: {title or 'No title found'}\n\n"
-            
-
-#     # Extract abstract
-#     abstract = None
-#     for key in ['abstract', 'pdf_parse.abstract.text']:
-#         try:
-#             temp = json_data
-#             for k in key.split('.'):
-#                 temp = temp[k]
-#             if isinstance(temp, list) and temp and 'text'in temp[0]:
-#                 abstract = temp[0]['text']
-#             elif isinstance(temp, str):
-#                 abstract = temp
-#             break
-#         except (KeyError,TypeError):
-#             continue
-#     organized_text += f"Abstract: {abstract or 'No abstract found'}\n\n"
-
-#     # Extract body text
-#     if 'body_text' in pdf_parse:
-#         for body_item in pdf_parse['body_text']:
-#             section = body_item.get('section', 'Unnamed Section')
-#             sec_num = body_item.get('sec_num')
-            
-#             if section not in seen_sections:
-#                 seen_sections.add(section)
-#                 if sec_num:
-#                     organized_text += f"{sec_num}. {section}:\n\n"
-#                 else:
-#                     organized_text += f"{section}:\n\n"
-            
-#             organized_text += body_item['text'] + "\n\n"
-
-#     # Extract figures and tables
-#     if 'ref_entries' in pdf_parse:
-#         organized_text += "Figures and Tables:\n\n"
-#         for ref_key, ref_value in pdf_parse['ref_entries'].items():
-#             if ref_value['type_str'] in ['figure', 'table']:
-#                 organized_text += f"{ref_value['text']}\n\n"
-#                 if ref_value['type_str'] == 'table' and 'content' in ref_value:
-#                     organized_text += f"Table content: {ref_value['content']}\n\n"
-
-#     return organized_text.strip()
-
 class ReviewSystemWorkflow:
     def __init__(self, base_dir, pdf_path, prompts_file, model_id):
         self.base_dir = base_dir
@@ -156,6 +91,17 @@ class ReviewSystemWorkflow:
 
         return organized_text.strip(), title, abstract, list_of_reference
 
+
+    # Brandley's tool
+    # input from extract information
+    # output is the suggestion for commenting on the novelty of the paper
+
+
+    # Pawin's tool
+    # 
+    #
+
+
     
     def run_workflow(self):
         # Step 1: Process the PDF
@@ -195,7 +141,8 @@ class ReviewSystemWorkflow:
             base_dir=self.base_dir,
             model_id=self.model_id,
             prompts_file=self.prompts_file,
-            text_file=output_file_path
+            text_file=output_file_path,
+            novelty_assessment_file=os.path.join(self.base_dir, 'ai_reviewer', 'novelty_pawin.txt')
         )
         
        
