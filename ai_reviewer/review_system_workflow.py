@@ -2,6 +2,7 @@ from MultiAgentWorkflow import MultiAgentWorkflow
 from pdf_processor import PdfProcessor
 from baselines import generate_barebones_review, generate_liang_etal_review
 from FigureTool.FigureTool import FigureTool, PaperArgument, ExtractedFigureCaption
+from NoveltyTool.NoveltyTool import NoveltyTool
 from anthropic import AnthropicBedrock
 import json
 import os
@@ -13,6 +14,7 @@ class ReviewSystemWorkflow:
         self.prompts_file = prompts_file
         self.model_id = model_id
         self.output_dir = os.path.join(self.base_dir, 'output_files', 'generated_reviews')
+        self.novelty_tool = NoveltyTool()
         self.figure_tool = FigureTool()
         self.client = AnthropicBedrock(
             aws_access_key=os.getenv("AWS_ACCESS_KEY"),  
@@ -141,16 +143,21 @@ class ReviewSystemWorkflow:
         with open(os.path.join(self.output_dir, 'barebones_review.txt'), 'w') as f:
             f.write(barebones_review)
 
-        # Step 3.1 : Assess Image Caption
         paper_argument = PaperArgument(title=title, abstract=abstract)
+        # Step 3.1 : Assess Novelty
+        search_phrases = self.novelty_tool.generate_search(self.client, paper_argument)
+        related_papers = self.novelty_tool.search_related_papers(self.client, paper_argument, search_phrases)
+        final_related_papers = self.novelty_tool.remove_cited(list_of_reference, related_papers)
+        filter_papers = self.novelty_tool.filter_papers(self.client, paper_argument, final_related_papers)
+        novelty_assessment = self.novelty_tool.assess_novelty(self.client, paper_argument, filter_papers)
+        summarized_results = self.novelty_tool.summarize_results(self.client, novelty_assessment)
 
+        # Step 3.2 : Assess Image Caption
         image_caption_dict = self.figure_tool.extract_figures_and_captions(self.pdf_path)
         image_caption_assessment = self.figure_tool.assess_figures_and_captions(self.client, paper_argument, image_caption_dict)
 
 
         # Step 4: Initialize the MultiAgentWorkflow
-
-
         workflow = MultiAgentWorkflow(
             base_dir=self.base_dir,
             model_id=self.model_id,
