@@ -275,8 +275,9 @@ class NoveltyTool(BaseTool):
             messages = [{
                 "role": "user",
                 "content": f'''
-                As a novelty assessor, compare the following proposed academic paper abstract with an existing paper's abstract.
-                Evaluate whether the new paper presents a significantly novel idea or approach compared to the existing paper.
+                As a skeptical novelty assessor, compare the following proposed academic paper abstract with an existing paper's abstract.
+                Evaluate whether the new paper presents a significantly novel idea or approach compared to the existing paper. It is paramount
+                that you do not let any non-novel paper slip by and look at the overlap through a critical lens. 
                 
                 New Paper: 
                 Title: {argument['title']}
