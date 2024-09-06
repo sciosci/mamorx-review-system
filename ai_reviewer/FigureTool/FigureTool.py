@@ -81,7 +81,7 @@ class FigureTool(BaseTool):
                         {
                             "type": "text",
                             "text": f'''
-                        Given the abstract of an academic paper and captions below, generate a short review on the clarity and consistency between the given image with the provided captions and the abstract. Be as critical and skeptical as possible. It is crucial that inconsistencies are pointed out to avoid misinformation. If there are any inconsistencies, please list them out as well.
+                        Given the abstract of an academic paper and captions below, generate a short review on the clarity and consistency between the given image with the provided captions and the abstract. Be as critical as possible. If there are any inconsistencies, please list them out as well. Ignore minor inconsistencies since the images might not be complete. Overall, try to give a balanced view and focus on improvement suggestions.
                          
                          Abstract: {argument["abstract"]},
 
