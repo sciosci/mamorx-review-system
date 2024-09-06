@@ -3,17 +3,35 @@ import json
 from dotenv import load_dotenv
 from crewai import Agent, Task, Crew, Process
 from model import load_model
-from crewai_tools import FileReadTool, TXTSearchTool
+from crewai_tools import FileReadTool, TXTSearchTool, BaseTool,tool
+
+# def static_string_tool_generator(description: str, output: str):
+#     @tool(description=description)
+#     def static_string_tool():
+#         return output
+    
+#     return static_string_tool
+
+    
+# class TextReturnTool(BaseTool):
+#     name: str = "TextReturnTool"
+#     description: str = "This tool returns the text that was passed to it."
+
+#     def __run(question:str) ->str:
+#         # Implementation goes here
+
+
 
 
 class MultiAgentWorkflow:
-    def __init__(self, base_dir='data', model_id="anthropic.claude-3-5-sonnet-20240620-v1:0", prompts_file='prompts.json'):
+    def __init__(self, base_dir, model_id, text_file=None, prompts_file=None, novelty_assessment_path=None, figure_critic_assessment_path=None):
         self.base_dir = base_dir
         self.model_id = model_id
+        self.text_file = text_file
         self.prompts_file = prompts_file
+        self.novelty_assessment = novelty_assessment_path
+        self.figure_critic_assessment = figure_critic_assessment_path
         self.load_environment()
-        self.setup_file_paths()
-        self.load_file_contents()
         self.load_prompts()
         self.setup_tools()
         self.setup_agents()
@@ -31,24 +49,14 @@ class MultiAgentWorkflow:
     def load_prompts(self):
         with open(self.prompts_file, 'r') as file:
             self.prompts = json.load(file)
-    
-    def setup_file_paths(self):
-        file_paths= {
-            'testing_paper': '2024.sdp-1.15.txt',
-        }
 
-        self.full_paths = {key: os.path.join(self.base_dir, file_name) for key, file_name in file_paths.items()}
-
-    def load_file_contents(self):
-        self.file_contents ={}
-        for key, path in self.full_paths.items():
-            with open(path, 'r') as file:
-                with open(path, 'r') as file:
-                    self.file_contents[key] = file.read()
 
     def setup_tools(self):
-        self.paper_read_tool = FileReadTool(file_path=self.full_paths['testing_paper'])
-        self.paper_search_tool = TXTSearchTool(txt=self.full_paths['testing_paper'])
+        self.paper_read_tool = FileReadTool(self.text_file)
+        self.paper_search_tool = TXTSearchTool(text=self.text_file)
+        self.figure_critic_tool = FileReadTool(self.figure_critic_assessment)
+        self.novelty_tool = FileReadTool(self.novelty_assessment)
+
 
     def setup_agents(self):
         self.llm = load_model(self.model_id)
@@ -56,75 +64,75 @@ class MultiAgentWorkflow:
         self.review_leader = Agent(
             role='review_leader',
             goal="Lead the review of a scientific paper. Assign tasks to the other agents and answer their questions. Make sure the review is thorough and accurate.",
-            backstory=self.prompts['multi_agent_without_knowledge']['leader']['system_prompt'],
+            backstory=self.prompts['multi_agent_with_knowledge']['leader']['system_prompt'],
             cache=True,
             llm=self.llm,
-            tools=[self.paper_read_tool, self.paper_search_tool],
+            tools=[self.paper_read_tool, self.paper_search_tool, self.figure_critic_tool, self.novelty_tool],
             verbose=True
             )
 
         self.experiments_agent = Agent(
             role='experiments_agent',
             goal="Help review a scientific paper, especially focusing the experiment/methods of the paper. Be ready to answer questions from the review_leader and look for answers from the text assigned to you.",
-            backstory= self.prompts['multi_agent_without_knowledge']['experiment_agent']['system_prompt'],
+            backstory= self.prompts['multi_agent_with_knowledge']['experiment_agent']['system_prompt'],
             cache=True,
             llm=self.llm,
-            tools=[self.paper_read_tool, self.paper_search_tool],
+            tools=[self.paper_read_tool, self.paper_search_tool, self.figure_critic_tool],
             verbose=True,
             )
         
         self.clarity_agent = Agent(
             role='clarity_agent',
             goal="Help review a scientific paper, especially focusing the clarity of the paper. Be ready to answer questions from the review_leader and look for answers from the text assigned to you.",
-            backstory=self.prompts['multi_agent_without_knowledge']['clarity_agent']['system_prompt'],
+            backstory=self.prompts['multi_agent_with_knowledge']['clarity_agent']['system_prompt'],
             cache=True,
             llm=self.llm,
-            tools=[self.paper_read_tool, self.paper_search_tool],
+            tools=[self.paper_read_tool, self.paper_search_tool, self.figure_critic_tool],
             verbose=True
             )
         
         self.impact_agent = Agent(
             role='impact_agent',
             goal="Help review a scientific paper, especially focusing the impact of the paper. Be ready to answer questions from the review_leader and look for answers from the text assigned to you.",
-            backstory=self.prompts['multi_agent_without_knowledge']['impact_agent']['system_prompt'],
+            backstory=self.prompts['multi_agent_with_knowledge']['impact_agent']['system_prompt'],
             cache=True,
             llm=self.llm,
-            tools=[self.paper_read_tool, self.paper_search_tool],
+            tools=[self.paper_read_tool, self.paper_search_tool, self.novelty_tool],
             verbose=True
             )
         
         self.manager = Agent(
             role='manager',
             goal="Manage the workflow of the review process by bridging the communication between the agents.",
-            backstory=self.prompts['multi_agent_without_knowledge']['manager']['system_prompt'],
+            backstory=self.prompts['multi_agent_with_knowledge']['manager']['system_prompt'],
             cache=True,
             llm=self.llm,
             )
 
     def setup_tasks(self):
         self.leader_task = Task(
-            description=self.prompts['multi_agent_without_knowledge']['leader']['task_prompt'],
-            expected_output='A final list of feedbacks/comments for the paper resembling that of the peer-reviews for scientific paper, it should incorporates suggestions from the other expert agents.',
+            description=self.prompts['multi_agent_with_knowledge']['leader']['task_prompt'],
+            expected_output='A final list of comprehensive feedbacks/comments for the paper resembling that of the peer-reviews for scientific paper, it should incorporates suggestions from the other expert agents.',
             agent=self.review_leader,
-            output_file='aug_21_final_review_2.txt',
+            output_file='sep_4_final_review_2.txt',
             )
 
         self.clarity_agent_tasks = Task(
-            description=self.prompts['multi_agent_without_knowledge']['clarity_agent']['task_prompt'],
+            description=self.prompts['multi_agent_with_knowledge']['clarity_agent']['task_prompt'],
             expected_output="A series of messages sent to 'review_leader'.",
             agent=self.clarity_agent,
             context=[self.leader_task]
             )
 
         self.experiments_agent_tasks = Task(
-            description=self.prompts['multi_agent_without_knowledge']['experiment_agent']['task_prompt'],
+            description=self.prompts['multi_agent_with_knowledge']['experiment_agent']['task_prompt'],
             expected_output="A series of messages sent to 'review_leader'.",
             agent=self.experiments_agent,
             context=[self.leader_task]
             )
 
         self.impact_agent_tasks = Task(
-            description=self.prompts['multi_agent_without_knowledge']['impact_agent']['task_prompt'],
+            description=self.prompts['multi_agent_with_knowledge']['impact_agent']['task_prompt'],
             expected_output="A series of messages sent to 'review_leader'.",
             agent=self.impact_agent,
             context=[self.leader_task]
