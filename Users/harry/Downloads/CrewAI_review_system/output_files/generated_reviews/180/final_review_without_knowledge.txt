@@ -1,0 +1,15 @@
+Here is the final list of comprehensive feedbacks/comments for the paper "Identifying Products in Online Cybercrime Marketplaces: A Dataset and Fine-grained Domain Adaptation Task":
+
+1. Novel Contribution: The paper introduces a valuable new dataset and task formulation for identifying products in online cybercrime marketplaces. This addresses a crucial gap in NLP research for cybersecurity applications and provides a solid foundation for future work in this area.
+
+2. Fine-grained Domain Concept: The authors effectively explain and demonstrate the concept of "fine-grained domains" within the broader cybercrime context. This highlights the unique challenges of adapting NLP models across seemingly similar but distinct forums.
+
+3. Thorough Annotation Process: The detailed description of the annotation process, including the development of guidelines and the use of domain experts, enhances the reliability and reproducibility of the dataset. The discussion of inter-annotator agreement further strengthens the credibility of the annotations.
+
+4. Comprehensive Evaluation: The use of multiple evaluation metrics (token-level, type-level, and post-level accuracy) provides a nuanced view of system performance across different potential applications.
+
+5. In-depth Domain Adaptation Analysis: The paper offers valuable insights into the difficulties of adapting NLP models across different cybercrime forums, supported by extensive experimentation and analysis. This contributes significantly to our understanding of fine-grained domain adaptation challenges.
+
+6. Real-world Implications: The research has significant practical applications for law enforcement and cybersecurity professionals in tracking illegal activities, identifying emerging threats, and understanding market dynamics in illicit online spaces.
+
+7. Ethical Considerations: While the paper acknowledges the sensitive nature of cybercrime data, a more in-depth exploration of ethical implications and potential misuse of the research

@@ -8,9 +8,10 @@ import json
 import os
 
 class ReviewSystemWorkflow:
-    def __init__(self, base_dir, pdf_path, prompts_file, model_id):
+    def __init__(self, base_dir, pdf_path, prompts_file, model_id, system_type):
         self.base_dir = base_dir
         self.pdf_path = pdf_path
+        self.system_type = system_type
         self.prompts_file = prompts_file
         self.model_id = model_id
         self.output_dir = os.path.join(self.base_dir, 'output_files', 'generated_reviews')
@@ -162,20 +163,27 @@ class ReviewSystemWorkflow:
             f.write(figure_critic_assessment)
                   
         # Step 4: Initialize the MultiAgentWorkflow
-        workflow = MultiAgentWorkflow(
-            base_dir=self.base_dir,
-            model_id=self.model_id,
-            prompts_file=self.prompts_file,
-            text_file=output_file_path,
-            novelty_assessment_path=os.path.join(self.temp_output_dir, 'novelty_assessment.txt'),
-            figure_critic_assessment_path=os.path.join(self.temp_output_dir, 'figure_critic_assessment.txt')
-        )
-
+        if self.system_type == 'multi_agent_with_knowledge':
+            workflow = MultiAgentWorkflow(
+                base_dir=self.base_dir,
+                model_id=self.model_id,
+                system_type=self.system_type,
+                prompts_file=self.prompts_file,
+                text_file=output_file_path,
+                novelty_assessment_path=os.path.join(self.temp_output_dir, 'novelty_assessment.txt'),
+                figure_critic_assessment_path=os.path.join(self.temp_output_dir, 'figure_critic_assessment.txt'))
+        else:
+            workflow = MultiAgentWorkflow(
+                base_dir=self.base_dir,
+                model_id=self.model_id,
+                system_type=self.system_type,
+                prompts_file=self.prompts_file,
+                text_file=output_file_path)
         
        
         result = workflow.initiate_workflow()
-        # Step 5: Post-processing
-        with open('sep_4_final_review_2.txt', 'r') as f:
+        # Step 5: Post-processing (Optional, only if system_type == 'multi_agent_with_knowledge')
+        with open('final_review.txt', 'r') as f:
             final_review = f.read()
 
         message = [{"role": "user",

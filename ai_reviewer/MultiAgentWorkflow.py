@@ -5,28 +5,13 @@ from crewai import Agent, Task, Crew, Process
 from model import load_model
 from crewai_tools import FileReadTool, TXTSearchTool, BaseTool,tool
 
-# def static_string_tool_generator(description: str, output: str):
-#     @tool(description=description)
-#     def static_string_tool():
-#         return output
-    
-#     return static_string_tool
-
-    
-# class TextReturnTool(BaseTool):
-#     name: str = "TextReturnTool"
-#     description: str = "This tool returns the text that was passed to it."
-
-#     def __run(question:str) ->str:
-#         # Implementation goes here
-
-
-
 
 class MultiAgentWorkflow:
-    def __init__(self, base_dir, model_id, text_file=None, prompts_file=None, novelty_assessment_path=None, figure_critic_assessment_path=None):
+    def __init__(self, base_dir, model_id, text_file=None, output_path=None,prompts_file=None, novelty_assessment_path=None, figure_critic_assessment_path=None, system_type=None):
         self.base_dir = base_dir
         self.model_id = model_id
+        self.system_type = system_type
+        self.output_path = output_path
         self.text_file = text_file
         self.prompts_file = prompts_file
         self.novelty_assessment = novelty_assessment_path
@@ -54,67 +39,73 @@ class MultiAgentWorkflow:
     def setup_tools(self):
         self.paper_read_tool = FileReadTool(self.text_file)
         self.paper_search_tool = TXTSearchTool(text=self.text_file)
-        self.figure_critic_tool = FileReadTool(self.figure_critic_assessment)
-        self.novelty_tool = FileReadTool(self.novelty_assessment)
+        if (self.system_type == 'multi_agent_with_knowledge'):
+            self.figure_critic_tool = FileReadTool(self.figure_critic_assessment)
+            self.novelty_tool = FileReadTool(self.novelty_assessment)
+        else:
+            self.figure_critic_tool = None
+            self.novelty_tool = None
 
 
     def setup_agents(self):
         self.llm = load_model(self.model_id)
 
+        common_tools = [self.paper_read_tool, self.paper_search_tool]
+
         self.review_leader = Agent(
             role='review_leader',
             goal="Lead the review of a scientific paper. Assign tasks to the other agents and answer their questions. Make sure the review is thorough and accurate.",
-            backstory=self.prompts['multi_agent_with_knowledge']['leader']['system_prompt'],
+            backstory=self.prompts[self.system_type]['leader']['system_prompt'],
             cache=True,
             llm=self.llm,
-            tools=[self.paper_read_tool, self.paper_search_tool, self.figure_critic_tool, self.novelty_tool],
+            tools=common_tools + ([self.figure_critic_assessment, self.novelty_tool] if self.system_type == 'multi_agent_with_knowledge' else []),
             verbose=True
             )
 
         self.experiments_agent = Agent(
             role='experiments_agent',
             goal="Help review a scientific paper, especially focusing the experiment/methods of the paper. Be ready to answer questions from the review_leader and look for answers from the text assigned to you.",
-            backstory= self.prompts['multi_agent_with_knowledge']['experiment_agent']['system_prompt'],
+            backstory= self.prompts[self.system_type]['experiment_agent']['system_prompt'],
             cache=True,
             llm=self.llm,
-            tools=[self.paper_read_tool, self.paper_search_tool, self.figure_critic_tool],
+            tools=common_tools + ([self.figure_critic_assessment] if self.system_type == 'multi_agent_with_knowledge' else []),
             verbose=True,
             )
         
         self.clarity_agent = Agent(
             role='clarity_agent',
             goal="Help review a scientific paper, especially focusing the clarity of the paper. Be ready to answer questions from the review_leader and look for answers from the text assigned to you.",
-            backstory=self.prompts['multi_agent_with_knowledge']['clarity_agent']['system_prompt'],
+            backstory=self.prompts[self.system_type]['clarity_agent']['system_prompt'],
             cache=True,
             llm=self.llm,
-            tools=[self.paper_read_tool, self.paper_search_tool, self.figure_critic_tool],
+            tools=common_tools + ([self.figure_critic_assessment] if self.system_type == 'multi_agent_with_knowledge' else []),
             verbose=True
             )
         
         self.impact_agent = Agent(
             role='impact_agent',
             goal="Help review a scientific paper, especially focusing the impact of the paper. Be ready to answer questions from the review_leader and look for answers from the text assigned to you.",
-            backstory=self.prompts['multi_agent_with_knowledge']['impact_agent']['system_prompt'],
+            backstory=self.prompts[self.system_type]['impact_agent']['system_prompt'],
             cache=True,
             llm=self.llm,
-            tools=[self.paper_read_tool, self.paper_search_tool, self.novelty_tool],
+            tools=common_tools + ([self.novelty_tool] if self.system_type == 'multi_agent_with_knowledge' else []),
             verbose=True
             )
         
         self.manager = Agent(
             role='manager',
             goal="Manage the workflow of the review process by bridging the communication between the agents.",
-            backstory=self.prompts['multi_agent_with_knowledge']['manager']['system_prompt'],
+            backstory=self.prompts[self.system_type]['manager']['system_prompt'],
             cache=True,
             llm=self.llm,
             )
 
     def setup_tasks(self):
         self.leader_task = Task(
-            description=self.prompts['multi_agent_with_knowledge']['leader']['task_prompt'],
+            description=self.prompts[self.system_type]['leader']['task_prompt'],
             expected_output='A final list of comprehensive feedbacks/comments for the paper resembling that of the peer-reviews for scientific paper, it should incorporates suggestions from the other expert agents.',
             agent=self.review_leader,
-            output_file='sep_4_final_review_2.txt',
+            output_file= self.output_path
             )
 
         self.clarity_agent_tasks = Task(
