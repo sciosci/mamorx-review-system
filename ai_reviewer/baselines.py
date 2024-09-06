@@ -2,6 +2,11 @@ import json
 from dotenv import load_dotenv
 from langchain_aws import ChatBedrock
 import os
+from pathlib import Path
+
+BASE_DIR = Path(__file__).parent.parent
+with open(os.path.join(BASE_DIR, 'data/prompts.json')) as f:
+    prompts = json.load(f)
 
 def generate_barebones_review(paper: str, prompt_file: str = "prompts.json"):
     # Loading prompts

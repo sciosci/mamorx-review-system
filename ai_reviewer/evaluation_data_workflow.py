@@ -67,9 +67,10 @@ def generate_jsonl_line(paper_id: str, title: str, pdf_path: str,
 
 
 class ReviewSystemWorkflow:
-    def __init__(self, base_dir, pdf_path, prompts_file, model_id):
+    def __init__(self, base_dir, pdf_path, human_reviewer_path, prompts_file, model_id):
         self.base_dir = base_dir
         self.pdf_path = pdf_path
+        self.human_reviewer_path = human_reviewer_path
         self.prompts_file = prompts_file
         self.model_id = model_id
         self.output_dir = os.path.join(self.base_dir, 'output_files', 'generated_reviews')
@@ -92,6 +93,8 @@ class ReviewSystemWorkflow:
         # Ensure we're working with the correct structure
         pdf_parse = json_data.get('pdf_parse', json_data)
 
+        # Extract paper ID
+        paper_id = json_data.get('paper_id', 'No paper ID found')
 
 
         # Extract title by accessing the 'title' key in the JSON data
@@ -159,7 +162,7 @@ class ReviewSystemWorkflow:
                     if ref_value['type_str'] == 'table' and 'content' in ref_value:
                         organized_text += f"Table content: {ref_value['content']}\n\n"
 
-        return organized_text.strip(), title, abstract, list_of_reference
+        return organized_text.strip(), paper_id, title, abstract, list_of_reference
 
 
 
@@ -175,7 +178,7 @@ class ReviewSystemWorkflow:
         with open(parsed_pdf_path, 'r') as f:
             parsed_pdf_data = json.load(f)
 
-        organized_text, title, abstract, list_of_reference = self.extract_organized_text(parsed_pdf_data)
+        organized_text, paper_id, title, abstract, list_of_reference = self.extract_organized_text(parsed_pdf_data)
 
         output_dir = os.path.join(self.base_dir, 'output_files', 'temp')
         os.makedirs(output_dir, exist_ok=True)
@@ -185,56 +188,68 @@ class ReviewSystemWorkflow:
             f.write(organized_text)
 
         # Step 3: Generate the baseline reviews
+        # Ensure the directory exists
+        os.makedirs(os.path.join(self.output_dir, paper_id), exist_ok=True)
 
         liang_etal_review = generate_liang_etal_review(title="Title", paper=organized_text)
 
-        with open(os.path.join(self.output_dir, 'liang_etal_review.txt'), 'w') as f:
+        with open(os.path.join(self.output_dir, paper_id,'liang_etal_review.txt'), 'w') as f:
             f.write(liang_etal_review)
         
         barebones_review = generate_barebones_review(paper=organized_text)
 
-        with open(os.path.join(self.output_dir, 'barebones_review.txt'), 'w') as f:
+        with open(os.path.join(self.output_dir, paper_id, 'barebones_review.txt'), 'w') as f:
             f.write(barebones_review)
 
+        # Step 4: Initialize the MultiAgentWorkflow without knowledge here
+        workflow = MultiAgentWorkflow(
+            base_dir=self.base_dir,
+            model_id=self.model_id,
+            prompts_file=self.prompts_file,
+            text_file= output_file_path,
+            output_path= os.path.join(self.output_dir, paper_id, 'final_review_without_knowledge.txt'),
+            system_type='multi_agent_without_knowledge'
+        )
+        result_without_knowledge = workflow.initiate_workflow()
+        # Step 5: Initialize the MultiAgentWorkflow with knowledge here
+
         paper_argument = PaperArgument(title=title, abstract=abstract)
-        # Step 3.1 : Assess Novelty
+        # Step 5.1 : Assess Novelty
         search_phrases = self.novelty_tool.generate_search(self.client, paper_argument)
         related_papers = self.novelty_tool.search_related_papers(self.client, paper_argument, search_phrases)
         final_related_papers = self.novelty_tool.remove_cited(list_of_reference, related_papers)
         filter_papers = self.novelty_tool.filter_papers(self.client, paper_argument, final_related_papers)
         novelty_assessment = self.novelty_tool.assess_novelty(self.client, paper_argument, filter_papers)
         novelty_summary = self.novelty_tool.summarize_results(self.client, novelty_assessment)
-        #TODO: Get the concatenated text of the novelty assessment
 
-        with open(os.path.join(self.temp_output_dir, 'novelty_assessment.txt'), 'w') as f:
+        with open(os.path.join(self.temp_output_dir,paper_id, 'novelty_assessment.txt'), 'w') as f:
             for item in novelty_assessment:
                 f.write(f"{item}\n")
 
-        # Step 3.2 : Assess Image Caption
+        # Step 5.2 : Assess Image Caption
         image_caption_dict = self.figure_tool.extract_figures_and_captions(self.pdf_path)
         figure_critic_assessment = self.figure_tool.assess_figures_and_captions(self.client, paper_argument, image_caption_dict)
 
-        # with open(os.path.join(self.temp_output_dir, 'novelty_summary.txt'), 'w') as f:
-        #     f.write(novelty_summary)
-
-        with open(os.path.join(self.temp_output_dir, 'figure_critic_assessment.txt'), 'w') as f:
+        with open(os.path.join(self.temp_output_dir,paper_id, 'figure_critic_assessment.txt'), 'w') as f:
             f.write(figure_critic_assessment)
                   
-        # Step 4: Initialize the MultiAgentWorkflow
+        # Step 5.3: Initialize the MultiAgentWorkflow
         workflow = MultiAgentWorkflow(
             base_dir=self.base_dir,
             model_id=self.model_id,
             prompts_file=self.prompts_file,
             text_file=output_file_path,
-            novelty_assessment_path=os.path.join(self.temp_output_dir, 'novelty_assessment.txt'),
-            figure_critic_assessment_path=os.path.join(self.temp_output_dir, 'figure_critic_assessment.txt')
+            output_path= os.path.join(self.output_dir, paper_id, 'final_review_with_knowledge.txt'),
+            novelty_assessment_path=os.path.join(self.temp_output_dir,paper_id, 'novelty_assessment.txt'),
+            figure_critic_assessment_path=os.path.join(self.temp_output_dir,paper_id, 'figure_critic_assessment.txt'),
+            system_type='multi_agent_with_knowledge'
         )
 
         
        
-        result = workflow.initiate_workflow()
-        # Step 5: Post-processing
-        with open('final_review.txt', 'r') as f:
+        result_with_knowledge = workflow.initiate_workflow()
+        # Step 6: Post-processing
+        with open(os.path.join(self.output_dir, paper_id, 'final_review_with_knowledge.txt'), 'r') as f:
             final_review = f.read()
 
         message = [{"role": "user",
@@ -270,7 +285,14 @@ class ReviewSystemWorkflow:
             response = str(response)
         
         response = response.strip()
-        print(f"FINAL REVIEW: \n {response}\n")
+
+        paper_json =generate_jsonl_line(paper_id, title, self.pdf_path, 
+                        self.human_reviewer_path, os.path.join(self.output_dir, paper_id, 'barebones_review.txt'), 
+                        os.path.join(self.output_dir, paper_id,'liang_etal_review.txt'), os.path.join(self.output_dir, paper_id, 'final_review_without_knowledge.txt'), 
+                        os.path.join(self.output_dir, paper_id, 'final_review_with_knowledge.txt'))
+
+        print(paper_json)
     
-        return response
+    
+        return paper_json
     
