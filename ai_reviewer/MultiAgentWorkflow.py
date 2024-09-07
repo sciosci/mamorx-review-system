@@ -21,6 +21,18 @@ from crewai_tools import FileReadTool, TXTSearchTool, BaseTool,tool
 #         # Implementation goes here
 
 
+class FileReadToolFixed(FileReadTool):
+    
+    def _run(
+        self,
+        **kwargs,
+    ):
+        try:
+            file_path = kwargs.get('file_path', self.file_path)
+            with open(file_path, 'r', encoding="utf-8") as file:
+                return file.read()
+        except Exception as e:
+            return f"Fail to read the file {file_path}. Error: {e}"
 
 
 class MultiAgentWorkflow:
@@ -47,15 +59,16 @@ class MultiAgentWorkflow:
             os.environ[var] = os.getenv(var, '')
 
     def load_prompts(self):
+        print(f"Attempting to load prompts file : {self.prompts_file}")
         with open(self.prompts_file, 'r') as file:
             self.prompts = json.load(file)
 
 
     def setup_tools(self):
-        self.paper_read_tool = FileReadTool(self.text_file)
+        self.paper_read_tool = FileReadToolFixed(self.text_file)
         self.paper_search_tool = TXTSearchTool(text=self.text_file)
-        self.figure_critic_tool = FileReadTool(self.figure_critic_assessment)
-        self.novelty_tool = FileReadTool(self.novelty_assessment)
+        self.figure_critic_tool = FileReadToolFixed(self.figure_critic_assessment)
+        self.novelty_tool = FileReadToolFixed(self.novelty_assessment)
 
 
     def setup_agents(self):

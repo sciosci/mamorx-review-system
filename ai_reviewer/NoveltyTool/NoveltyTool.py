@@ -3,6 +3,10 @@ import json
 import time
 import requests
 from crewai_tools import BaseTool
+from ratelimit import limits, sleep_and_retry
+from anthropic import AnthropicBedrock
+
+MODEL_ID = "anthropic.claude-3-5-sonnet-20240620-v1:0"
 
 class NoveltyTool(BaseTool):
     name:str = "novelty-tool"
@@ -58,6 +62,12 @@ class NoveltyTool(BaseTool):
             content = str(content)
 
         final_kw = content.strip()
+        # final_kw = self.__send_prompt(
+        #     client, 
+        #     MODEL_ID, 
+        #     messages,
+        #     128
+        #     )
         print(f"First phrase: {final_kw}\n")
         search_phrases.append(final_kw)
         
@@ -74,19 +84,25 @@ class NoveltyTool(BaseTool):
             '''
         }]
 
-        keywords = client.messages.create(
-            model="anthropic.claude-3-5-sonnet-20240620-v1:0",
-            max_tokens=128,
-            messages=messages
-        )
+        # keywords = client.messages.create(
+        #     model="anthropic.claude-3-5-sonnet-20240620-v1:0",
+        #     max_tokens=128,
+        #     messages=messages
+        # )
 
-        content = keywords.content
-        if isinstance(content, list) and len(content) > 0:
-            content = content[0].text
-        else:
-            content = str(content)
+        # content = keywords.content
+        # if isinstance(content, list) and len(content) > 0:
+        #     content = content[0].text
+        # else:
+        #     content = str(content)
 
-        final_kw = content.strip()
+        # final_kw = content.strip()
+        final_kw = self.__send_prompt(
+            client, 
+            MODEL_ID, 
+            messages,
+            128
+            )
         print(f"Second phrase: {final_kw}\n")
         search_phrases.append(final_kw)
         
@@ -103,23 +119,31 @@ class NoveltyTool(BaseTool):
             '''
         }]
 
-        keywords = client.messages.create(
-            model="anthropic.claude-3-5-sonnet-20240620-v1:0",
-            max_tokens=128,
-            messages=messages
-        )
+        # keywords = client.messages.create(
+        #     model="anthropic.claude-3-5-sonnet-20240620-v1:0",
+        #     max_tokens=128,
+        #     messages=messages
+        # )
 
-        content = keywords.content
-        if isinstance(content, list) and len(content) > 0:
-            content = content[0].text
-        else:
-            content = str(content)
+        # content = keywords.content
+        # if isinstance(content, list) and len(content) > 0:
+        #     content = content[0].text
+        # else:
+        #     content = str(content)
 
-        final_kw = content.strip()
+        # final_kw = content.strip()
+        final_kw = self.__send_prompt(
+            client, 
+            MODEL_ID, 
+            messages,
+            128
+            )
         print(f"Third phrase: {final_kw}\n")
         search_phrases.append(final_kw)
         return search_phrases
 
+    @sleep_and_retry
+    @limits(calls=20, period=60)
     def search_related_papers(self, client, argument, search_phrases):
         print("============================")
         print("SEARCHING FOR RELATED PAPERS (Step: 3/7)")
@@ -241,18 +265,24 @@ class NoveltyTool(BaseTool):
                 '''
             }]
             
-            response = client.messages.create(
-                model="anthropic.claude-3-5-sonnet-20240620-v1:0",
-                max_tokens=2,
-                messages=messages
-            )
-            content = response.content
-            if isinstance(content, list) and len(content) > 0:
-                content = content[0].text
-            else:
-                content = str(content)
+            # response = client.messages.create(
+            #     model="anthropic.claude-3-5-sonnet-20240620-v1:0",
+            #     max_tokens=2,
+            #     messages=messages
+            # )
+            # content = response.content
+            # if isinstance(content, list) and len(content) > 0:
+            #     content = content[0].text
+            # else:
+            #     content = str(content)
 
-            res = content.strip()
+            # res = content.strip()
+            res = self.__send_prompt(
+                client, 
+                MODEL_ID, 
+                messages,
+                2
+            )
             if res.lower() == "relevant":
                 filtered_dict[title] = abstract
             
@@ -301,20 +331,26 @@ class NoveltyTool(BaseTool):
                 Justification: [Your Assessment Here]
                 '''
             }]
-            response = client.messages.create(
-                model="anthropic.claude-3-5-sonnet-20240620-v1:0",
-                max_tokens=256,
-                messages=messages
-            )
+            # response = client.messages.create(
+            #     model="anthropic.claude-3-5-sonnet-20240620-v1:0",
+            #     max_tokens=256,
+            #     messages=messages
+            # )
             
-            # Format response to text only:
-            response = response.content
-            if isinstance(response, list) and len(response) > 0:
-                response = response[0].text
-            else:
-                response = str(response)
+            # # Format response to text only:
+            # response = response.content
+            # if isinstance(response, list) and len(response) > 0:
+            #     response = response[0].text
+            # else:
+            #     response = str(response)
 
-            response = response.strip()
+            # response = response.strip()
+            response = self.__send_prompt(
+                client, 
+                MODEL_ID, 
+                messages,
+                256
+            )
             results.append({
                 'existing_title': title,
                 'assessment': response
@@ -341,18 +377,44 @@ class NoveltyTool(BaseTool):
                 {results}
             '''
         }]
-        response = client.messages.create(
-            model="anthropic.claude-3-5-sonnet-20240620-v1:0",
-            max_tokens=256,
-            messages=messages
-        )
-        # Format response to text only:
-        response = response.content
-        if isinstance(response, list) and len(response) > 0:
-            response = response[0].text
-        else:
-            response = str(response)
+        # response = client.messages.create(
+        #     model="anthropic.claude-3-5-sonnet-20240620-v1:0",
+        #     max_tokens=256,
+        #     messages=messages
+        # )
+        # # Format response to text only:
+        # response = response.content
+        # if isinstance(response, list) and len(response) > 0:
+        #     response = response[0].text
+        # else:
+        #     response = str(response)
 
-        response = response.strip()
+        # response = response.strip()
+        response = self.__send_prompt(
+                client, 
+                MODEL_ID, 
+                messages,
+                256
+            )
         print(f"FINAL ASSESSMENT: \n{response}\n")
         return response
+    
+
+    @sleep_and_retry
+    @limits(calls=50, period=60)
+    def __send_prompt(self, client: AnthropicBedrock, model_id: str, messages, max_tokens: int) -> str:
+        response = client.messages.create(
+                model=model_id,
+                max_tokens=max_tokens,
+                messages=messages
+            )
+        
+        content = response.content
+        if isinstance(content, list) and len(content) > 0:
+            content = content[0].text
+        else:
+            content = str(content)
+
+        content = content.strip()
+
+        return content

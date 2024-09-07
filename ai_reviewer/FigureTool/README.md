@@ -10,11 +10,15 @@ pip install papermage[dev,predictors,visualizers]
 
 pip install boto3 pillow  
 
-pip instal transformers==4.31.0  
+pip install transformers==4.31.0  
 
 pip install crewai crewai_tools   
 
 pip install anthropic  
+
+pip install python-dotenv
+
+pip install langchain_aws
 
 </code>
 

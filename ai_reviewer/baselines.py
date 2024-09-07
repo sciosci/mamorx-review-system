@@ -3,9 +3,10 @@ from dotenv import load_dotenv
 from langchain_aws import ChatBedrock
 import os
 
-def generate_barebones_review(paper: str):
+def generate_barebones_review(paper: str, prompt_file: str = "prompts.json"):
     # Loading prompts
-    with open('prompts.json') as f:
+    print("Attempting to load prompts in barebone")
+    with open(prompt_file) as f:
         prompts = json.load(f)
 
     # Getting prompts
@@ -38,9 +39,10 @@ def generate_barebones_review(paper: str):
     
 
 
-def generate_liang_etal_review(title: str, paper: str):
+def generate_liang_etal_review(title: str, paper: str, prompt_file: str = "prompts.json"):
     # Loading prompts
-    with open('prompts.json') as f:
+    print("Attempting to load prompts in liang")
+    with open(prompt_file) as f:
         prompts = json.load(f)
 
     # Getting prompts
