@@ -17,8 +17,8 @@ def main(base_dir, pdf_path, human_review_path,  prompts_file, model_id):
 if __name__ == "__main__":
     # Define parameters
     BASE_DIR = Path(__file__).parent.parent   # Project dir
-    PDF_NAME = '180.pdf' # PDF file name
-    HUMAN_REVIER_PATH = os.path.join(BASE_DIR,'eval/acl_2017_human_review/180.txt')  # Path to the human review data
+    PDF_NAME = '66.pdf' # PDF file name
+    HUMAN_REVIER_PATH = ""  # Path to the human review data
     PROMPTS_FILE = os.path.join(BASE_DIR, 'data/prompts.json') # Prompt.json 
     MODEL_ID = "anthropic.claude-3-5-sonnet-20240620-v1:0"
 

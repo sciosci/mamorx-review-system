@@ -53,7 +53,7 @@ def generate_jsonl_line(paper_id: str, title: str, pdf_path: str,
         paper_id=paper_id,
         title=title,
         pdf_path=pdf_path,
-        human_reviewer=read_and_process(human_reviewer_path),
+        human_reviewer=human_reviewer_path,
         barebones=read_and_process(barebones_path),
         liang_etal=read_and_process(liang_etal_path),
         multi_agent_without_knowledge=read_and_process(multi_agent_without_knowledge_path),
@@ -221,6 +221,8 @@ class ReviewSystemWorkflow:
         filter_papers = self.novelty_tool.filter_papers(self.client, paper_argument, final_related_papers)
         novelty_assessment = self.novelty_tool.assess_novelty(self.client, paper_argument, filter_papers)
         novelty_summary = self.novelty_tool.summarize_results(self.client, novelty_assessment)
+        
+        os.makedirs(os.path.join(self.temp_output_dir, paper_id), exist_ok=True)
 
         with open(os.path.join(self.temp_output_dir,paper_id, 'novelty_assessment.txt'), 'w') as f:
             for item in novelty_assessment:
@@ -233,7 +235,7 @@ class ReviewSystemWorkflow:
         with open(os.path.join(self.temp_output_dir,paper_id, 'figure_critic_assessment.txt'), 'w') as f:
             f.write(figure_critic_assessment)
                   
-        # Step 5.3: Initialize the MultiAgentWorkflow
+        # Step 5.3: Initialize the MultiAgentWorkflow with knowledge here
         workflow = MultiAgentWorkflow(
             base_dir=self.base_dir,
             model_id=self.model_id,
@@ -292,6 +294,8 @@ class ReviewSystemWorkflow:
                         os.path.join(self.output_dir, paper_id, 'final_review_with_knowledge.txt'))
 
         print(paper_json)
+        with open(os.path.join(self.output_dir, paper_id, 'reviews.json'), 'w') as f:
+            f.write(paper_json)
     
     
         return paper_json
