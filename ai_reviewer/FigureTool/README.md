@@ -10,9 +10,7 @@ pip install papermage[dev,predictors,visualizers]
 
 pip install boto3 pillow  
 
-pip install transformers==4.31.0  
-
-pip install crewai crewai_tools   
+pip install tokenizers==0.19.1 transformers==4.44.2
 
 pip install anthropic  
 
@@ -20,6 +18,11 @@ pip install python-dotenv
 
 pip install langchain_aws
 
+pip install crewai==0.41.1 crewai_tools==0.4.26   
+
+pip install ratelimit
+
+pip install lxml
 </code>
 
 # Common Error 1

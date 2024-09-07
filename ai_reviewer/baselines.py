@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).parent.parent
-with open(os.path.join(BASE_DIR, 'data/prompts.json')) as f:
+with open(os.path.join(BASE_DIR, 'data/prompts.json'), "r", encoding="utf-8") as f:
     prompts = json.load(f)
 
 def generate_barebones_review(paper: str, prompt_file: str = "prompts.json"):
@@ -46,8 +46,7 @@ def generate_barebones_review(paper: str, prompt_file: str = "prompts.json"):
 
 def generate_liang_etal_review(title: str, paper: str, prompt_file: str = "prompts.json"):
     # Loading prompts
-    print("Attempting to load prompts in liang")
-    with open(prompt_file) as f:
+    with open(prompt_file, "r", encoding="utf-8") as f:
         prompts = json.load(f)
 
     # Getting prompts

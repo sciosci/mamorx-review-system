@@ -175,7 +175,7 @@ class ReviewSystemWorkflow:
         parsed_pdf_path = pdf_processor.process_pdf_file(self.pdf_path)
         
         # Step 2: Load the parsed PDF data
-        with open(parsed_pdf_path, 'r') as f:
+        with open(parsed_pdf_path, 'r', encoding="utf-8") as f:
             parsed_pdf_data = json.load(f)
 
         organized_text, paper_id, title, abstract, list_of_reference = self.extract_organized_text(parsed_pdf_data)
@@ -191,14 +191,14 @@ class ReviewSystemWorkflow:
         # Ensure the directory exists
         os.makedirs(os.path.join(self.output_dir, paper_id), exist_ok=True)
 
-        liang_etal_review = generate_liang_etal_review(title="Title", paper=organized_text)
+        liang_etal_review = generate_liang_etal_review(title="Title", paper=organized_text, prompt_file=self.prompts_file)
 
-        with open(os.path.join(self.output_dir, paper_id,'liang_etal_review.txt'), 'w') as f:
+        with open(os.path.join(self.output_dir, paper_id,'liang_etal_review.txt'), 'w', encoding="utf-8") as f:
             f.write(liang_etal_review)
         
-        barebones_review = generate_barebones_review(paper=organized_text)
+        barebones_review = generate_barebones_review(paper=organized_text, prompt_file=self.prompts_file)
 
-        with open(os.path.join(self.output_dir, paper_id, 'barebones_review.txt'), 'w') as f:
+        with open(os.path.join(self.output_dir, paper_id, 'barebones_review.txt'), 'w', encoding="utf-8") as f:
             f.write(barebones_review)
 
         # Step 4: Initialize the MultiAgentWorkflow without knowledge here
@@ -224,7 +224,7 @@ class ReviewSystemWorkflow:
         
         os.makedirs(os.path.join(self.temp_output_dir, paper_id), exist_ok=True)
 
-        with open(os.path.join(self.temp_output_dir,paper_id, 'novelty_assessment.txt'), 'w') as f:
+        with open(os.path.join(self.temp_output_dir,paper_id, 'novelty_assessment.txt'), 'w', encoding="utf-8") as f:
             for item in novelty_assessment:
                 f.write(f"{item}\n")
 
@@ -232,7 +232,7 @@ class ReviewSystemWorkflow:
         image_caption_dict = self.figure_tool.extract_figures_and_captions(self.pdf_path)
         figure_critic_assessment = self.figure_tool.assess_figures_and_captions(self.client, paper_argument, image_caption_dict)
 
-        with open(os.path.join(self.temp_output_dir,paper_id, 'figure_critic_assessment.txt'), 'w') as f:
+        with open(os.path.join(self.temp_output_dir,paper_id, 'figure_critic_assessment.txt'), 'w', encoding="utf-8") as f:
             f.write(figure_critic_assessment)
                   
         # Step 5.3: Initialize the MultiAgentWorkflow with knowledge here
@@ -251,7 +251,7 @@ class ReviewSystemWorkflow:
        
         result_with_knowledge = workflow.initiate_workflow()
         # Step 6: Post-processing
-        with open(os.path.join(self.output_dir, paper_id, 'final_review_with_knowledge.txt'), 'r') as f:
+        with open(os.path.join(self.output_dir, paper_id, 'final_review_with_knowledge.txt'), 'r', encoding="utf-8") as f:
             final_review = f.read()
 
         message = [{"role": "user",
@@ -294,7 +294,7 @@ class ReviewSystemWorkflow:
                         os.path.join(self.output_dir, paper_id, 'final_review_with_knowledge.txt'))
 
         print(paper_json)
-        with open(os.path.join(self.output_dir, paper_id, 'reviews.json'), 'w') as f:
+        with open(os.path.join(self.output_dir, paper_id, 'reviews.json'), 'w', encoding="utf-8") as f:
             f.write(paper_json)
     
     

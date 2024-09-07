@@ -21,10 +21,12 @@ def process_pdf(base_dir, pdf_dir_path: Path, prompts_file, model_id) -> PDFRevi
     # Initialize & run the ReviewSystemWorkflow
     review_system = ReviewSystemWorkflow(base_pdf_dir, str(pdf_dir_path), prompts_file, model_id)
     result = review_system.run_workflow()
+    # result = ""
 
-    return PDFReviewResult(full_path=pdf_dir_path, name=pdf_dir_path.name, result=result)
+    return PDFReviewResult(full_path=pdf_file_path, name=pdf_file_path.name, result=result)
 
-def main(base_dir, pdf_dir_path, prompts_file, model_id, max_workers):
+
+def main(base_dir, pdf_dir_path, human_review_path,  prompts_file, model_id, max_workers):
     base_path = Path(base_dir)
     base_path.mkdir(parents=True, exist_ok=True)
 
@@ -33,7 +35,7 @@ def main(base_dir, pdf_dir_path, prompts_file, model_id, max_workers):
     pdf_file_paths = [entry for entry in pdf_dir.glob("*/*.pdf")][:2]
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = [executor.submit(process_pdf, base_dir, entry, prompts_file, model_id) for entry in pdf_file_paths]
+        futures = [executor.submit(process_pdf, base_dir, entry, human_review_path, prompts_file, model_id) for entry in pdf_file_paths]
         for future in as_completed(futures):
             try:
                 result = future.result()
