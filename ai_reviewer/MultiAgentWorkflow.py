@@ -84,7 +84,7 @@ class MultiAgentWorkflow:
             backstory=self.prompts[self.system_type]['leader']['system_prompt'],
             cache=True,
             llm=self.llm,
-            tools=common_tools + ([self.figure_critic_assessment, self.novelty_tool] if self.system_type == 'multi_agent_with_knowledge' else []),
+            tools=common_tools + ([self.figure_critic_tool, self.novelty_tool] if self.system_type == 'multi_agent_with_knowledge' else []),
             verbose=True
             )
 
@@ -94,7 +94,7 @@ class MultiAgentWorkflow:
             backstory= self.prompts[self.system_type]['experiment_agent']['system_prompt'],
             cache=True,
             llm=self.llm,
-            tools=common_tools + ([self.figure_critic_assessment] if self.system_type == 'multi_agent_with_knowledge' else []),
+            tools=common_tools + ([self.figure_critic_tool] if self.system_type == 'multi_agent_with_knowledge' else []),
             verbose=True,
             )
         
@@ -104,7 +104,7 @@ class MultiAgentWorkflow:
             backstory=self.prompts[self.system_type]['clarity_agent']['system_prompt'],
             cache=True,
             llm=self.llm,
-            tools=common_tools + ([self.figure_critic_assessment] if self.system_type == 'multi_agent_with_knowledge' else []),
+            tools=common_tools + ([self.figure_critic_tool] if self.system_type == 'multi_agent_with_knowledge' else []),
             verbose=True
             )
         
@@ -129,27 +129,27 @@ class MultiAgentWorkflow:
     def setup_tasks(self):
         self.leader_task = Task(
             description=self.prompts[self.system_type]['leader']['task_prompt'],
-            expected_output='A final list of comprehensive feedbacks/comments for the paper resembling that of the peer-reviews for scientific paper, it should incorporates suggestions from the other expert agents.',
+            expected_output='A final review for the paper resembling that of the peer-reviews for scientific paper, it should be a very detailed and honest discussion of the paper.',
             agent=self.review_leader,
             output_file= self.output_path
             )
 
         self.clarity_agent_tasks = Task(
-            description=self.prompts['multi_agent_with_knowledge']['clarity_agent']['task_prompt'],
+            description=self.prompts[self.system_type]['clarity_agent']['task_prompt'],
             expected_output="A series of messages sent to 'review_leader'.",
             agent=self.clarity_agent,
             context=[self.leader_task]
             )
 
         self.experiments_agent_tasks = Task(
-            description=self.prompts['multi_agent_with_knowledge']['experiment_agent']['task_prompt'],
+            description=self.prompts[self.system_type]['experiment_agent']['task_prompt'],
             expected_output="A series of messages sent to 'review_leader'.",
             agent=self.experiments_agent,
             context=[self.leader_task]
             )
 
         self.impact_agent_tasks = Task(
-            description=self.prompts['multi_agent_with_knowledge']['impact_agent']['task_prompt'],
+            description=self.prompts[self.system_type]['impact_agent']['task_prompt'],
             expected_output="A series of messages sent to 'review_leader'.",
             agent=self.impact_agent,
             context=[self.leader_task]
