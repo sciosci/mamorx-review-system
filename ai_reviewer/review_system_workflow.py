@@ -127,14 +127,14 @@ class ReviewSystemWorkflow:
 
         # Step 3: Generate the baseline reviews
 
-        liang_etal_review = generate_liang_etal_review(title="Title", paper=organized_text)
+        liang_etal_review = generate_liang_etal_review(title="Title", paper=organized_text, prompt_file=self.prompts_file)
 
-        with open(os.path.join(self.output_dir, 'liang_etal_review.txt'), 'w') as f:
+        with open(os.path.join(self.output_dir, 'liang_etal_review.txt'), 'w', encoding="utf-8") as f:
             f.write(liang_etal_review)
         
-        barebones_review = generate_barebones_review(paper=organized_text)
+        barebones_review = generate_barebones_review(paper=organized_text, prompt_file=self.prompts_file)
 
-        with open(os.path.join(self.output_dir, 'barebones_review.txt'), 'w') as f:
+        with open(os.path.join(self.output_dir, 'barebones_review.txt'), 'w', encoding="utf-8") as f:
             f.write(barebones_review)
 
         paper_argument = PaperArgument(title=title, abstract=abstract)
@@ -147,7 +147,7 @@ class ReviewSystemWorkflow:
         novelty_summary = self.novelty_tool.summarize_results(self.client, novelty_assessment)
         #TODO: Get the concatenated text of the novelty assessment
 
-        with open(os.path.join(self.temp_output_dir, 'novelty_assessment.txt'), 'w') as f:
+        with open(os.path.join(self.temp_output_dir, 'novelty_assessment.txt'), 'w', encoding="utf-8") as f:
             for item in novelty_assessment:
                 f.write(f"{item}\n")
 
@@ -158,7 +158,7 @@ class ReviewSystemWorkflow:
         # with open(os.path.join(self.temp_output_dir, 'novelty_summary.txt'), 'w') as f:
         #     f.write(novelty_summary)
 
-        with open(os.path.join(self.temp_output_dir, 'figure_critic_assessment.txt'), 'w') as f:
+        with open(os.path.join(self.temp_output_dir, 'figure_critic_assessment.txt'), 'w', encoding="utf-8") as f:
             f.write(figure_critic_assessment)
                   
         # Step 4: Initialize the MultiAgentWorkflow

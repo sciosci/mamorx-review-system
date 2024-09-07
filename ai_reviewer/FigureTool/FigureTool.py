@@ -5,6 +5,7 @@ from anthropic import AnthropicBedrock
 from crewai_tools import BaseTool
 import io
 import base64
+from ratelimit import limits, sleep_and_retry
 
 MODEL_ID = "anthropic.claude-3-5-sonnet-20240620-v1:0"
 
@@ -148,9 +149,11 @@ class FigureTool(BaseTool):
 
         return final_result
     
+    @sleep_and_retry
+    @limits(calls=50, period=60)
     def __send_prompt(self, client: AnthropicBedrock, model_id: str, messages, max_tokens: int) -> str:
         response = client.messages.create(
-                model=MODEL_ID,
+                model=model_id,
                 max_tokens=max_tokens,
                 messages=messages
             )
