@@ -2,14 +2,17 @@ import json
 from dotenv import load_dotenv
 from langchain_aws import ChatBedrock
 import os
+from pathlib import Path
+
+BASE_DIR = Path(__file__).parent.parent
+with open(os.path.join(BASE_DIR, 'data/prompts.json')) as f:
+    prompts = json.load(f)
 
 def generate_barebones_review(paper: str, prompt_file: str = "prompts.json"):
     # Loading prompts
-    print("Attempting to load prompts in barebone")
     with open(prompt_file) as f:
         prompts = json.load(f)
 
-    # Getting prompts
     bare_system_prompt = prompts['barebones']['system_prompt']
     bare_task_prompt = prompts['barebones']['task_prompt']
 
@@ -39,11 +42,15 @@ def generate_barebones_review(paper: str, prompt_file: str = "prompts.json"):
     
 
 
+<<<<<<< HEAD
 def generate_liang_etal_review(title: str, paper: str, prompt_file: str = "prompts.json"):
     # Loading prompts
     print("Attempting to load prompts in liang")
     with open(prompt_file) as f:
         prompts = json.load(f)
+=======
+def generate_liang_etal_review(title: str, paper: str):
+>>>>>>> automated_json_output_generation
 
     # Getting prompts
     system_prompt = prompts['liang_et_al']['system_prompt']
