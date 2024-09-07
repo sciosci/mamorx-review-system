@@ -18,7 +18,7 @@ pip install python-dotenv
 
 pip install langchain_aws
 
-pip install crewai==0.41.1 crewai_tools==0.4.26   
+pip install crewai==0.51.1 crewai_tools==0.12.0
 
 pip install ratelimit
 

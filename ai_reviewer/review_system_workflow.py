@@ -14,8 +14,8 @@ class ReviewSystemWorkflow:
         self.system_type = system_type
         self.prompts_file = prompts_file
         self.model_id = model_id
-        self.output_dir = os.path.join(self.base_dir, 'output_files', 'generated_reviews')
-        self.temp_output_dir = os.path.join(self.base_dir, 'output_files/temp')
+        self.output_dir = os.path.join(self.base_dir, 'generated_reviews')
+        self.temp_output_dir = os.path.join(self.base_dir, 'temp')
         self.novelty_tool = NoveltyTool()
         self.figure_tool = FigureTool()
         self.client = AnthropicBedrock(
@@ -119,7 +119,7 @@ class ReviewSystemWorkflow:
 
         organized_text, title, abstract, list_of_reference = self.extract_organized_text(parsed_pdf_data)
 
-        output_dir = os.path.join(self.base_dir, 'output_files', 'temp')
+        output_dir = os.path.join(self.base_dir, 'temp')
         os.makedirs(output_dir, exist_ok=True)
         output_file_path = os.path.join(output_dir, 'organized_text.txt')
 
