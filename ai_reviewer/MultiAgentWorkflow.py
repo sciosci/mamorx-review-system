@@ -1,9 +1,22 @@
 import os
 import json
+from typing import Any
 from dotenv import load_dotenv
 from crewai import Agent, Task, Crew, Process
 from model import load_model
 from crewai_tools import FileReadTool, TXTSearchTool, BaseTool,tool
+
+class FileReadToolFixed(FileReadTool):
+    def _run(
+        self,
+        **kwargs: Any,
+    ) -> Any:
+        try:
+            file_path = kwargs.get('file_path', self.file_path)
+            with open(file_path, 'r', encoding="utf-8") as file:
+                return file.read()
+        except Exception as e:
+            return f"Fail to read the file {file_path}. Error: {e}"
 
 
 class MultiAgentWorkflow:
@@ -33,7 +46,7 @@ class MultiAgentWorkflow:
 
     def load_prompts(self):
         print(f"Attempting to load prompts file : {self.prompts_file}")
-        with open(self.prompts_file, 'r') as file:
+        with open(self.prompts_file, 'r', encoding="utf-8") as file:
             self.prompts = json.load(file)
 
 
@@ -41,8 +54,8 @@ class MultiAgentWorkflow:
         self.paper_read_tool = FileReadToolFixed(self.text_file)
         self.paper_search_tool = TXTSearchTool(text=self.text_file)
         if (self.system_type == 'multi_agent_with_knowledge'):
-            self.figure_critic_tool = FileReadTool(self.figure_critic_assessment)
-            self.novelty_tool = FileReadTool(self.novelty_assessment)
+            self.figure_critic_tool = FileReadToolFixed(self.figure_critic_assessment)
+            self.novelty_tool = FileReadToolFixed(self.novelty_assessment)
         else:
             self.figure_critic_tool = None
             self.novelty_tool = None
