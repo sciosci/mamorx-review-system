@@ -1,0 +1,25 @@
+Review outline:
+
+1. Significance and novelty
+
+2. Potential reasons for acceptance
+
+3. Potential reasons for rejection
+- Lack of strong empirical validation
+  • Limited datasets used (only 3)
+  • No ablation studies or sensitivity analysis presented
+- Insufficient comparison to state-of-the-art
+  • Only compared to 2 baseline methods
+  • No comparison to more recent deep learning approaches for multimodal sentiment analysis
+- Questionable generalizability 
+  • Person-independent setup but small number of speakers
+  • Cross-lingual experiment shows poor performance
+- Lack of theoretical grounding
+  • No formal analysis of why LSTM is suitable for capturing inter-utterance dependencies
+  • No discussion of limitations of proposed approach
+
+4. Suggestions for improvement
+- Conduct more extensive experiments
+- Provide stronger empirical comparisons 
+- Analyze generalizability more rigorously
+- Strengthen theoretical foundations
