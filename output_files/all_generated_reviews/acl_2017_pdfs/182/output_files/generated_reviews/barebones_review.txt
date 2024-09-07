@@ -1,0 +1,21 @@
+Here are the main feedback comments I would provide as a peer reviewer for this scientific paper:
+
+1. The paper proposes an interesting and novel approach to multimodal sentiment analysis by using LSTM networks to model contextual relationships between utterances. This addresses an important gap in existing work.
+
+2. The methodology is generally sound and well-explained. The hierarchical LSTM architecture for fusing multimodal features is a key contribution.
+
+3. The experimental setup using multiple datasets and speaker-independent splits is robust. The comparison to state-of-the-art baselines demonstrates clear improvements.
+
+4. The analysis of different LSTM variants and fusion approaches provides useful insights into the model design choices.
+
+5. The qualitative analysis and error analysis helps explain the model's strengths and limitations.
+
+6. The cross-dataset generalization experiments are a valuable addition to test robustness.
+
+7. The paper could benefit from a more thorough discussion of limitations and potential future work to address them.
+
+8. Some additional ablation studies or hyperparameter sensitivity analysis would strengthen the experimental validation.
+
+9. The writing and organization are generally clear, but some sections (e.g. the method description) could be tightened up for clarity.
+
+10. Overall, this appears to be a strong paper making a valuable contribution to multimodal sentiment analysis. With some minor revisions, it would be suitable for publication.

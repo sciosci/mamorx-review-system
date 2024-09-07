@@ -1,0 +1,22 @@
+Here are my main comments on this scientific paper:
+
+1. The paper presents an interesting and novel approach to incorporating linguistic knowledge into LSTM models for sentiment analysis. The use of regularizers to model the effects of sentiment words, negation, and intensity words is clever and well-motivated.
+
+2. The experimental results demonstrate clear improvements over baseline LSTM models and competitive performance compared to more complex tree-structured models. This is impressive given the relative simplicity of the proposed approach.
+
+3. The ablation studies and qualitative analysis provide good insights into how the different regularizers are contributing. The visualizations of negation and intensity effects are particularly illuminating.
+
+4. The paper could benefit from a more thorough discussion of limitations and potential future work. For example:
+   - How well would this approach generalize to other languages or domains?
+   - Are there cases where the linguistic assumptions made by the regularizers break down?
+   - Could the approach be extended to handle more complex linguistic phenomena?
+
+5. The evaluation is somewhat limited in scope, focusing only on two datasets. Including results on additional sentiment analysis benchmarks would strengthen the paper.
+
+6. More details on hyperparameter tuning and model training would be useful for reproducibility.
+
+7. The writing is generally clear but there are some grammatical errors and awkward phrasings that should be cleaned up.
+
+8. The paper makes a good case for the benefits of incorporating linguistic knowledge, but could do more to situate this work in the broader context of injecting prior knowledge into neural models.
+
+Overall, this appears to be a solid contribution that presents a simple yet effective way to leverage linguistic resources for sentiment analysis. The main strengths are the novel technical approach and strong empirical results.
