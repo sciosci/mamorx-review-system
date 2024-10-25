@@ -47,3 +47,14 @@ class WorkflowPrompt(TypedDict):
     multi_agent_with_knowledge: MultiAgentPrompt
 
 
+class GrobidConfig(TypedDict):
+    grobid_server: str
+    grobid_port: str
+    batch_size: int
+    sleep_time: int
+    generateIDs: bool
+    consolidate_header: bool
+    consolidate_citations: bool
+    include_raw_citations: bool
+    include_raw_affiliations: bool
+    max_workers: int
