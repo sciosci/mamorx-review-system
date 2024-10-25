@@ -1,0 +1,23 @@
+services:
+  grobid:
+    image: grobid/grobid:0.8.0
+    init: true
+    ports:
+      - "8070:8070"
+      - "8071:8071"
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            # count: all
+            device_ids: ['1', '2', '3']
+            capabilities: [gpu]
+  # semantic-scholar:
+  #   image: ...
+  # llm-service:
+  #   image: ...
+  # reviewer-service:
+  #   image: ...
+  # reverse-proxy:
+  #   image: nginx
