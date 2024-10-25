@@ -17,7 +17,9 @@ def process_pdf(base_dir, pdf_file_path: Path, human_review_path: str, prompts_f
     # Parse PDF to JSON
 
     # Initialize review workflow
-    reviewer_workflow = ReviewerWorkflow(prompt_file_path=prompts_file_path)
+    reviewer_workflow = ReviewerWorkflow(
+        prompt_file_path=prompts_file_path, 
+        output_dir=base_dir)
 
     prompts = reviewer_workflow.get_prompts()
     
@@ -76,7 +78,7 @@ def main():
         for future in as_completed(futures):
             try:
                 result = future.result()
-                print(f"Completed review for: {result["title"]}")
+                print(f"Completed review for: {result}")
             except Exception as e:
                 print(f"An error occured: {str(e)}")
     

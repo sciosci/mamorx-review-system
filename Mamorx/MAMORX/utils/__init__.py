@@ -1,7 +1,7 @@
 import re
 import json
 
-from MAMORX.schemas import Paper, WorkflowPrompt
+from MAMORX.schemas import Paper, WorkflowPrompt, GrobidConfig
 
 def text_converter(text:str)->str:
     # A function that takes a text and converts it to a JSONL compatible format
@@ -55,4 +55,8 @@ def load_json_file_as_dict(file_path: str):
 
 
 def load_workflow_prompt(file_path: str) -> WorkflowPrompt:
+    return load_json_file_as_dict(file_path)
+
+
+def load_grobid_config(file_path: str) -> GrobidConfig:
     return load_json_file_as_dict(file_path)
