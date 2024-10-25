@@ -1,7 +1,7 @@
 import re
 import json
 
-from MAMORX.schemas import Paper
+from MAMORX.schemas import Paper, WorkflowPrompt
 
 def text_converter(text:str)->str:
     # A function that takes a text and converts it to a JSONL compatible format
@@ -45,3 +45,14 @@ def generate_jsonl_line(paper_id: str, title: str, pdf_path: str,
     # Convert to a single-line JSON string
     jsonl_line = json.dumps(paper, ensure_ascii=False, separators=(',', ':'))
     return jsonl_line
+
+
+def load_json_file_as_dict(file_path: str):
+    prompts = None
+    with open(file_path, "r", encoding="utf8") as f:
+        prompts = json.load(f)
+    return prompts
+
+
+def load_workflow_prompt(file_path: str) -> WorkflowPrompt:
+    return load_json_file_as_dict(file_path)

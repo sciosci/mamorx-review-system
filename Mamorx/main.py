@@ -7,7 +7,7 @@ from MAMORX.schemas import Paper
 from MAMORX.ReviewerWorkflow import ReviewerWorkflow
 
 
-def process_pdf(base_dir, pdf_file_path: Path, human_review_path: str, prompts_file, model_id) -> Paper:
+def process_pdf(base_dir, pdf_file_path: Path, human_review_path: str, prompts_file_path: str, model_id) -> Paper:
     # Create output directory for pdf file
     path_segment = "/".join(str(pdf_file_path).split("/")[-2:])[:-4]
     base_pdf_dir = Path(f"{base_dir}/{path_segment}")
@@ -17,7 +17,10 @@ def process_pdf(base_dir, pdf_file_path: Path, human_review_path: str, prompts_f
     # Parse PDF to JSON
 
     # Initialize review workflow
-    reviewer_workflow = ReviewerWorkflow()
+    reviewer_workflow = ReviewerWorkflow(prompt_file_path=prompts_file_path)
+
+    prompts = reviewer_workflow.get_prompts()
+    
 
     # 
 
@@ -63,7 +66,7 @@ def main():
 
     # List pdf file paths
     pdf_dir = Path(pdf_dir_path)
-    pdf_file_paths = [entry for entry in pdf_dir.glob("*/*.pdf")]
+    pdf_file_paths = [entry for entry in pdf_dir.glob("*/*.pdf")][:1]
 
     for e in pdf_file_paths:
         print(e)
