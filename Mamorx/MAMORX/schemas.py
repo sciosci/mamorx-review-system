@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import TypedDict, Optional
+from typing import TypedDict, Optional, List
 
 class PDFReviewResult(TypedDict):
     full_path: Path
@@ -49,12 +49,7 @@ class WorkflowPrompt(TypedDict):
 
 class GrobidConfig(TypedDict):
     grobid_server: str
-    grobid_port: str
     batch_size: int
     sleep_time: int
-    generateIDs: bool
-    consolidate_header: bool
-    consolidate_citations: bool
-    include_raw_citations: bool
-    include_raw_affiliations: bool
-    max_workers: int
+    timeout: int
+    coordinates: List[str]
