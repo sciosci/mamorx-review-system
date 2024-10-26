@@ -1,7 +1,9 @@
 import re
 import json
 
+from langchain_aws import ChatBedrock
 from MAMORX.schemas import PaperReviewResult, WorkflowPrompt, GrobidConfig
+
 
 def text_converter(text:str)->str:
     # A function that takes a text and converts it to a JSONL compatible format
@@ -31,7 +33,7 @@ def generate_jsonl_line(paper_id: str, title: str, pdf_path: str,
                         liang_etal_path: str, multi_agent_without_knowledge_path: str, 
                         multi_agent_with_knowledge_path: str) -> str:
 
-    paper = Paper(
+    paper = PaperReviewResult(
         paper_id=paper_id,
         title=title,
         pdf_path=pdf_path,
@@ -60,3 +62,25 @@ def load_workflow_prompt(file_path: str) -> WorkflowPrompt:
 
 def load_grobid_config(file_path: str) -> GrobidConfig:
     return load_json_file_as_dict(file_path)
+
+
+def generate_response_with_bedrock(system_prompt: str, user_prompt: str, api_config: APIConfigs) -> str | List[str | dict]:
+    # Create llm object based on ChatBedrock
+    llm = ChatBedrock(
+        model_id=api_config['anthropic_model_id'],
+        aws_access_key_id=api_config['aws_access_key_id'],
+        aws_secret_access_key=api_config['aws_secret_access_key'],
+        region=api_config["aws_default_region"]
+    )
+
+    # Construct messages for the model
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_prompt}
+    ]
+
+    # API call
+    response = llm.invoke(messages)
+    generated_review = response.content
+
+    return generated_review
