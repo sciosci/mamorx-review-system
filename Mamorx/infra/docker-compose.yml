@@ -13,6 +13,21 @@ services:
             # count: all
             device_ids: ['0']
             capabilities: [gpu]
+  # ollama:
+  #   image: ollama/ollama
+  #   ports:
+  #     - "11434:11434"
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #         - driver: nvidia
+  #           # count: all
+  #           device_ids: ['0']
+  #           capabilities: [gpu]
+  #   volumes:
+  #     - ollama:/root/.ollama
+    
   # semantic-scholar:
   #   image: ...
   # llm-service:
@@ -23,3 +38,7 @@ services:
   #   image: nginx
   # frontend:
   #   image: ...
+
+volumes:
+  ollama:
+    external: true
