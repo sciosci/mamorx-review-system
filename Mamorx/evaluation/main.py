@@ -11,7 +11,7 @@ from MAMORX.schemas import PaperReviewResult, APIConfigs
 from MAMORX.ReviewerWorkflow import ReviewerWorkflow
 
 
-def process_pdf_paper(base_dir, pdf_file_path: Path, human_review_path: str, prompts_file_path: str, api_config: APIConfigs) -> PaperReviewResult:
+def process_pdf_paper(base_dir, pdf_file_path: Path, human_review_path: str, prompts_file_path: str, api_config: APIConfigs, save_to_file: bool=False) -> PaperReviewResult:
     # Create output directory for pdf file
     path_segment = "/".join(str(pdf_file_path).split("/")[-2:])[:-4]
     base_pdf_dir = Path(f"{base_dir}/{path_segment}")
@@ -29,14 +29,11 @@ def process_pdf_paper(base_dir, pdf_file_path: Path, human_review_path: str, pro
     # Run review workflow
     review_result = reviewer_workflow.run_workflow(str(pdf_file_path))
     
-    with open("sample_out.json", "w") as f:
-        json.dump(review_result, f)
-    # 
-
-    # Initialize & run the ReviewSystemWorkflow
-    # review_system = ReviewSystemWorkflow(base_pdf_dir, str(pdf_file_path), human_review_path,prompts_file, model_id)
-    # result = review_system.run_workflow()
-    # result = ""
+    # Save results to file
+    if(save_to_file):
+        output_file_path = "{}/{}.json".format(base_pdf_dir, review_result["paper_id"])
+        with open(output_file_path, "w") as f:
+            json.dump(review_result, f, ensure_ascii=False, separators=(',', ':'), indent=4)
 
     return review_result
 
@@ -95,14 +92,14 @@ def main():
     for e in pdf_file_paths:
         print(e)
 
-    # with ProcessPoolExecutor(max_workers=max_workers) as executor:
-    #     futures = [executor.submit(process_pdf_paper, base_dir, entry, human_review_path, prompts_file, api_config) for entry in pdf_file_paths]
-    #     for future in as_completed(futures):
-    #         try:
-    #             result = future.result()
-    #             logging.info(f"Completed review for: {result['title']}")
-    #         except Exception as e:
-    #             logging.info(f"An error occured: {str(e)}")
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
+        futures = [executor.submit(process_pdf_paper, base_dir, entry, human_review_path, prompts_file, api_config, True) for entry in pdf_file_paths]
+        for future in as_completed(futures):
+            try:
+                result = future.result()
+                logging.info(f"Completed review for: {result['title']}")
+            except Exception as e:
+                logging.info(f"An error occured: {str(e)}")
     
     logging.info("Review Generation Complete")
     
