@@ -19,8 +19,9 @@ class PaperReviewResult(TypedDict):
 
 
 class APIConfigs(TypedDict):
+    anthropic_model_id: str
     openai_api_key: str
-    x_api_key: str
+    semantic_scholar_api_key: str
     openai_model_name: str
     aws_access_key_id: str
     aws_secret_access_key: str

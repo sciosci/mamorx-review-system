@@ -1,7 +1,7 @@
 import re
 import json
 
-from MAMORX.schemas import Paper, WorkflowPrompt, GrobidConfig
+from MAMORX.schemas import PaperReviewResult, WorkflowPrompt, GrobidConfig
 
 def text_converter(text:str)->str:
     # A function that takes a text and converts it to a JSONL compatible format

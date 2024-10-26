@@ -1,32 +1,33 @@
 import logging
 import argparse
+import json
 from pathlib import Path
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-from MAMORX.schemas import Paper
+from MAMORX.schemas import PaperReviewResult, APIConfigs
 from MAMORX.ReviewerWorkflow import ReviewerWorkflow
 
 
-def process_pdf(base_dir, pdf_file_path: Path, human_review_path: str, prompts_file_path: str, model_id) -> Paper:
+def process_pdf_paper(base_dir, pdf_file_path: Path, human_review_path: str, prompts_file_path: str, api_config: APIConfigs) -> PaperReviewResult:
     # Create output directory for pdf file
     path_segment = "/".join(str(pdf_file_path).split("/")[-2:])[:-4]
     base_pdf_dir = Path(f"{base_dir}/{path_segment}")
     base_pdf_dir.mkdir(parents=True, exist_ok=True) 
-
 
     # Parse PDF to JSON
 
     # Initialize review workflow
     reviewer_workflow = ReviewerWorkflow(
         prompt_file_path=prompts_file_path, 
-        output_dir=base_dir)
-
-    prompts = reviewer_workflow.get_prompts()
+        output_dir=base_dir,
+        api_config=api_config
+    )
 
     # Run review workflow
-    reviewer_workflow.run_workflow(str(pdf_file_path))
+    review_result = reviewer_workflow.run_workflow(str(pdf_file_path))
     
-
+    with open("sample_out.json", "w") as f:
+        json.dump(review_result, f)
     # 
 
     # Initialize & run the ReviewSystemWorkflow
@@ -34,7 +35,7 @@ def process_pdf(base_dir, pdf_file_path: Path, human_review_path: str, prompts_f
     # result = review_system.run_workflow()
     # result = ""
 
-    return Paper()
+    return review_result
 
 
 def main():
@@ -46,8 +47,15 @@ def main():
     parser.add_argument("-i", "--input-dir", help="directory with subdirectories containing pdf files", required=True)
     parser.add_argument("--human-review", help="directory with human reviews", required=False)
     parser.add_argument("--prompt-file", help="path to prompt.json", default="config/prompts.json")
-    parser.add_argument("--model-id", help="model id for anthropic claude", default="anthropic.claude-3-5-sonnet-20240620-v1:0")
+    parser.add_argument("--anthropic-model-id", help="model id for anthropic", default="anthropic.claude-3-5-sonnet-20240620-v1:0")
     parser.add_argument("--workers", help="max number of workers to process all PDFs in parallel", default=8, type=int)
+    parser.add_argument("--openai-api-key", help="OpenAI API key", required=True)
+    parser.add_argument("--semantic-scholar-api-key", help="Semantic Scholar API key", required=True)
+    parser.add_argument("--openai-model-name", help="OpenAI model name", default="gpt-4o-mini")
+    parser.add_argument("--aws-access-key-id", help="AWS access key id", required=True)
+    parser.add_argument("--aws-secret-access-key", help="AWS secret access key", required=True)
+    parser.add_argument("--aws-default-region", help="AWS default region", required=True)
+    
 
     arg_list= parser.parse_args()
     
@@ -55,8 +63,16 @@ def main():
     pdf_dir_path = arg_list.input_dir
     human_review_path = arg_list.human_review  # Path to the human review data
     prompts_file = arg_list.prompt_file # Prompt.json 
-    model_id = arg_list.model_id
     max_workers = arg_list.workers
+    api_config: APIConfigs = APIConfigs(
+        anthropic_model_id = arg_list.anthropic_model_id,
+        openai_api_key=arg_list.openai_api_key,
+        semantic_scholar_api_key=arg_list.semantic_scholar_api_key,
+        openai_model_name=arg_list.openai_model_name,
+        aws_access_key_id=arg_list.aws_access_key_id,
+        aws_secret_access_key=arg_list.aws_secret_access_key,
+        aws_default_region=arg_list.aws_default_region
+    )
 
     base_path = Path(base_dir)
     base_path.mkdir(parents=True, exist_ok=True)
@@ -77,13 +93,13 @@ def main():
         print(e)
 
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
-        futures = [executor.submit(process_pdf, base_dir, entry, human_review_path, prompts_file, model_id) for entry in pdf_file_paths]
+        futures = [executor.submit(process_pdf_paper, base_dir, entry, human_review_path, prompts_file, api_config) for entry in pdf_file_paths]
         for future in as_completed(futures):
             try:
                 result = future.result()
-                print(f"Completed review for: {result}")
+                logging.info(f"Completed review for: {result['title']}")
             except Exception as e:
-                print(f"An error occured: {str(e)}")
+                logging.info(f"An error occured: {str(e)}")
     
     logging.info("Review Generation Complete")
     

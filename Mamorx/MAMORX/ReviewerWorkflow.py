@@ -1,14 +1,15 @@
-from MAMORX.schemas import PaperReviewResult, WorkflowPrompt
+from MAMORX.schemas import PaperReviewResult, WorkflowPrompt, APIConfigs
 
 from MAMORX.review_generator.baselines import generate_barebones_review, generate_liang_etal_review
 from MAMORX.utils import load_workflow_prompt
 from MAMORX.utils.pdf_processor import PDFProcessor
 
 class ReviewerWorkflow:
-    def __init__(self, prompt_file_path: str, output_dir: str):
+    def __init__(self, prompt_file_path: str, output_dir: str, api_config: APIConfigs):
         self.workflow_prompts = load_workflow_prompt(prompt_file_path)
         self.output_dir = output_dir
         self.pdf_processor = PDFProcessor(output_dir)
+        self.api_config = api_config
 
 
     def extract_organized_text(self, json_data: str):
@@ -99,17 +100,28 @@ class ReviewerWorkflow:
         organized_text, paper_id, title, abstract, list_of_reference = self.extract_organized_text(paper)
         
         # Generate barebones review
-        # barebones = generate_barebones_review(
-        #     paper=organized_text,
-        #     prompt_dict=self.workflow_prompts['barebones'],
-        #     api_config=self.ap
-        # )
+        barebones = generate_barebones_review(
+            paper=organized_text,
+            prompts=self.workflow_prompts['barebones'],
+            api_config=self.api_config
+        )
 
         # Generate liange etal review
+        liang_etal = generate_liang_etal_review(
+            title=title,
+            paper=organized_text,
+            prompts=self.workflow_prompts['liang_et_al'],
+            api_config=self.api_config
+        )
 
         # Create paper object
-        paper_review_result = PaperReviewResult()
-
+        paper_review_result = PaperReviewResult(
+            paper_id=paper_id,
+            title=title,
+            pdf_path=pdf_file_path,
+            barebones=barebones,
+            liang_etal=liang_etal
+        )
 
 
         return paper_review_result
