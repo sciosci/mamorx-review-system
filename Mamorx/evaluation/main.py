@@ -8,7 +8,7 @@ from pathlib import Path
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 from MAMORX.schemas import PaperReviewResult, APIConfigs
-from MAMORX.ReviewerWorkflow import ReviewerWorkflow
+from MAMORX.reviewer_workflow import ReviewerWorkflow
 
 
 def process_pdf_paper(base_dir, pdf_file_path: Path, human_review_path: str, prompts_file_path: str, api_config: APIConfigs, save_to_file: bool=False) -> PaperReviewResult:
@@ -37,6 +37,7 @@ def process_pdf_paper(base_dir, pdf_file_path: Path, human_review_path: str, pro
 
 
 def main():
+    print(logging.getLogger(__name__))
     # parse arguments
     parser = argparse.ArgumentParser(description="""
     An evaluation of AI generated reviews by MAMORX
@@ -78,7 +79,8 @@ def main():
     # Create log file
     logging.basicConfig(filename=base_path / "log.out",
                         level=logging.INFO,
-                        format="%(asctime)s %(levelname)s %(processName)s %(message)s"
+                        format="%(asctime)s %(levelname)s %(processName)s %(message)s",
+                        force=True
                         )
     
     logging.info("Started Review Generation Process")
