@@ -6,6 +6,7 @@ from crewai_tools import TXTSearchTool
 from MAMORX.schemas import APIConfigs, MultiAgentPrompt
 from MAMORX.custom_crewai.task import CustomTask
 from MAMORX.custom_crewai_tools import FileReadToolUTF8, FigureTool, NoveltyTool
+from MAMORX.utils import load_chatbedrock_llm_model
 
 
 class MultiAgentReviewerCrew(object):
@@ -16,7 +17,7 @@ class MultiAgentReviewerCrew(object):
         self.api_config = api_config
         
         # LLM model (ChatBedrock) [Doesn't need to each per each review]
-        self.llm: Optional[ChatBedrock] = None
+        self.llm: Optional[ChatBedrock] = load_chatbedrock_llm_model(api_config=api_config)
 
         # Variables that change per each review (different paper or using knowledge or not)
         #   Prompts
