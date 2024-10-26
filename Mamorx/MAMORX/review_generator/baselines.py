@@ -1,77 +1,63 @@
-import json
-# from dotenv import load_dotenv
 from langchain_aws import ChatBedrock
-import os
-from pathlib import Path
-from MAMORX.schemas import APIConfigs
+from typing import List
+from MAMORX.schemas import APIConfigs, AgentPrompt
 
 
-def generate_barebones_review(paper: str, prompt_dict: dict, api_config: APIConfigs):
-    # # Loading prompts
-    # with open(prompt_file, "r", encoding="utf-8") as f:
-    #     prompts = json.load(f)
+def generate_review_with_bedrock(system_prompt: str, user_prompt: str, api_config: APIConfigs) -> str | List[str | dict]:
+    # Create llm object based on ChatBedrock
+    llm = ChatBedrock(
+        model_id=api_config['anthropic_model_id'],
+        aws_access_key_id=api_config['aws_access_key_id'],
+        aws_secret_access_key=api_config['aws_secret_access_key'],
+        region=api_config["aws_default_region"]
+    )
 
-    # bare_system_prompt = prompts['barebones']['system_prompt']
-    # bare_task_prompt = prompts['barebones']['task_prompt']
+    # Construct messages for the model
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_prompt}
+    ]
 
-    # # Format the prompts
-    # bare_formatted_task_prompt = bare_task_prompt.format( paper=paper)
+    # API call
+    response = llm.invoke(messages)
+    generated_review = response.content
 
-    #  # Load env
-    # load_dotenv()
-    # env_vars = ['OPENAI_API_KEY', 'OPENAI_MODEL_NAME', 'BROWSERBASE_PROJECT_ID', 
-    #                 'AWS_ACCESS_KEY_ID','AWS_SECRET_ACCESS_KEY', 'AWS_DEFAULT_REGION']
-    # for var in env_vars:
-    #     os.environ[var] = os.getenv(var, '')
-    # model_id = 'anthropic.claude-3-5-sonnet-20240620-v1:0'
-    # llm = ChatBedrock(model_id=model_id)
+    return generated_review
 
-    # # Construct messages for the model
-    # bare_messages = [
-    #     {"role": "system", "content": bare_system_prompt},
-    #     {"role": "user", "content": bare_formatted_task_prompt}
-    # ]
 
-    # # API call
-    # bare_response = llm.invoke(bare_messages)
-    # bare_generated_review = bare_response.content
+def generate_barebones_review(paper: str, prompts: AgentPrompt, api_config: APIConfigs):
+    # Loading prompts
+    bare_system_prompt = prompts['system_prompt']
+    bare_task_prompt = prompts['task_prompt']
 
-    # return bare_generated_review
-    return ""
+    # Format the prompts
+    bare_formatted_task_prompt = bare_task_prompt.format(paper=paper)
+
+    generated_review = generate_review_with_bedrock(
+        system_prompt=bare_system_prompt,
+        user_prompt=bare_formatted_task_prompt,
+        api_config=api_config
+    )
+
+    return generated_review
     
 
 
-def generate_liang_etal_review(title: str, paper: str, prompt_dict: dict, api_config: APIConfigs):
-    # # Loading prompts
-    # with open(prompt_file, "r", encoding="utf-8") as f:
-    #     prompts = json.load(f)
+def generate_liang_etal_review(title: str, paper: str, prompts: AgentPrompt, api_config: APIConfigs):
+    # Getting prompts
+    system_prompt = prompts['system_prompt']
+    task_prompt = prompts['task_prompt']
 
-    # # Getting prompts
-    # system_prompt = prompts['liang_et_al']['system_prompt']
-    # task_prompt = prompts['liang_et_al']['task_prompt']
+    # Format the prompts
+    formatted_task_prompt = task_prompt.format(title=title, paper=paper)
 
-    # # Format the prompts
-    # formatted_task_prompt = task_prompt.format(title=title, paper=paper)
+    generated_review = generate_review_with_bedrock(
+        system_prompt=system_prompt,
+        user_prompt=formatted_task_prompt,
+        api_config=api_config
+    )
 
-    # # Load env
-    # load_dotenv()
-    # env_vars = ['OPENAI_API_KEY', 'OPENAI_MODEL_NAME', 'BROWSERBASE_PROJECT_ID', 
-    #                 'AWS_ACCESS_KEY_ID','AWS_SECRET_ACCESS_KEY', 'AWS_DEFAULT_REGION']
-    # for var in env_vars:
-    #     os.environ[var] = os.getenv(var, '')
-    # model_id = 'anthropic.claude-3-5-sonnet-20240620-v1:0'
-    # llm = ChatBedrock(model_id=model_id)
+    return generated_review
+    
 
-    # # Construct messages for the model
-    # messages = [
-    #     {"role": "system", "content": system_prompt},
-    #     {"role": "user", "content": formatted_task_prompt}
-    # ]
-
-    # # API call
-    # response = llm.invoke(messages)
-    # generated_review = response.content
-
-    # return generated_review
-    return ""
 
