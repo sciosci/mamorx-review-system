@@ -14,6 +14,10 @@ class ReviewerWorkflow:
         self.output_dir = output_dir
         self.pdf_processor = PDFProcessor(output_dir)
         self.api_config = api_config
+        # Create MultiAgentReviewerCrew
+        self.multi_agent_reviewer = MultiAgentReviewerCrew(
+            api_config=self.api_config
+        )
 
 
     def extract_organized_text(self, json_data: str):
@@ -96,17 +100,10 @@ class ReviewerWorkflow:
         return organized_text.strip(), paper_id, title, abstract, list_of_reference
 
 
-    def run_workflow(self, pdf_file_path: str) -> PaperReviewResult:
-        # Parse PDF
-        paper = self.pdf_processor.process_pdf_file(pdf_file_path)
-
-        # Extract information from paper
-        organized_text, paper_id, title, abstract, list_of_reference = self.extract_organized_text(paper)
-        
-        # Generate barebones review
+    def generate_barebones_review_result(self, paper: str) -> ReviewResult:
         start_time = time()
         barebones = generate_barebones_review(
-            paper=organized_text,
+            paper=paper,
             prompts=self.workflow_prompts['barebones'],
             api_config=self.api_config
         )
@@ -115,12 +112,14 @@ class ReviewerWorkflow:
             review_content=barebones,
             time_elapsed=barebones_time
         )
+        return barebones_result
+    
 
-        # Generate liange etal review
+    def generate_liang_etal_review_result(self, title:str, paper:str) -> ReviewResult:
         start_time = time()
         liang_etal = generate_liang_etal_review(
             title=title,
-            paper=organized_text,
+            paper=paper,
             prompts=self.workflow_prompts['liang_et_al'],
             api_config=self.api_config
         )
@@ -129,6 +128,45 @@ class ReviewerWorkflow:
             review_content=liang_etal,
             time_elapsed=liang_etal_time
         )
+        return liang_etal_result
+    
+
+    def generate_review_with_muli_agent_result(self, parsed_text_file_path:str, pdf_file_path:str, use_knowledge:bool) -> ReviewResult:
+        prompts = self.workflow_prompts['multi_agent_with_knowledge'] if use_knowledge else self.workflow_prompts['multi_agent_without_knowledge']
+        novelty_assessment=None
+        figure_critic_assessment=None
+        if (use_knowledge):
+            novelty_assessment="novelty assessment placeholder"
+            figure_critic_assessment="figure critic assessment placeholder"
+
+        start_time = time()
+        multi_agent_review = self.multi_agent_reviewer.review_paper(
+            paper_txt_path=parsed_text_file_path,
+            novelty_assessment=novelty_assessment,
+            figure_critic_assessment=figure_critic_assessment,
+            prompts=prompts,
+            use_knowledge=use_knowledge
+        )
+        multi_agent_review_time = time() - start_time
+        multi_agent_review_result = ReviewResult(
+            review_content=multi_agent_review,
+            time_elapsed=multi_agent_review_time
+        )
+        return multi_agent_review_result
+
+
+    def run_workflow(self, pdf_file_path: str) -> PaperReviewResult:
+        # Parse PDF
+        paper = self.pdf_processor.process_pdf_file(pdf_file_path)
+
+        # Extract information from paper
+        organized_text, paper_id, title, abstract, list_of_reference = self.extract_organized_text(paper)
+        
+        # Generate barebones review
+        barebones_result = self.generate_barebones_review_result(paper=organized_text)
+
+        # Generate liange etal review
+        liang_etal_result = self.generate_liang_etal_review_result(title=title, paper=organized_text)
 
         # Save organized text as txt file for MultiAgentReviewerCrew
         temp_dir_path = Path(f"{self.output_dir}/tmp/{paper_id}")
@@ -136,46 +174,20 @@ class ReviewerWorkflow:
         parsed_text_file_path = temp_dir_path / "parsed_text_file.txt"
         with open(parsed_text_file_path, "w") as f:
             f.write(organized_text)
-
-        # Create MultiAgentReviewerCrew
-        multi_agent_reviewer = MultiAgentReviewerCrew(
-            api_config=self.api_config
-        )
+        
 
         # Generate multi agent review without knowledge
-        start_time = time()
-        multi_agent_review = multi_agent_reviewer.review_paper(
-            paper_txt_path=parsed_text_file_path,
-            novelty_assessment=None,
-            figure_critic_assessment=None,
-            prompts=self.workflow_prompts['multi_agent_without_knowledge'],
+        multi_agent_review_result = self.generate_review_with_muli_agent_result(
+            parsed_text_file_path=parsed_text_file_path,
+            pdf_file_path=pdf_file_path,
             use_knowledge=False
-        )
-        multi_agent_review = ""
-        multi_agent_review_time = time() - start_time
-        multi_agent_review_result = ReviewResult(
-            review_content=multi_agent_review,
-            time_elapsed=multi_agent_review_time
         )
 
         # Generate multi agent review with knowledge
-        start_time = time()
-        #   Assess Novelty
-        novelty_assessment = ""
-        #   Assess Figures
-        figure_critic_assessment = ""
-        multi_agent_review_with_knowledge = multi_agent_reviewer.review_paper(
-            paper_txt_path=parsed_text_file_path,
-            novelty_assessment=novelty_assessment,
-            figure_critic_assessment=figure_critic_assessment,
-            prompts=self.workflow_prompts['multi_agent_with_knowledge'],
+        multi_agent_review_with_knowledge_result = self.generate_review_with_muli_agent_result(
+            parsed_text_file_path=parsed_text_file_path,
+            pdf_file_path=pdf_file_path,
             use_knowledge=True
-        )
-        multi_agent_review_with_knowledge = ""
-        multi_agent_review_with_knowledge_time = time() - start_time
-        multi_agent_review_with_knowledge_result = ReviewResult(
-            review_content=multi_agent_review_with_knowledge,
-            time_elapsed=multi_agent_review_with_knowledge_time
         )
 
 
