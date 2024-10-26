@@ -85,3 +85,13 @@ def generate_response_with_bedrock(system_prompt: str, user_prompt: str, api_con
     generated_review = response.content
 
     return generated_review
+
+
+def load_chatbedrock_llm_model(api_config: APIConfigs) -> ChatBedrock:
+    llm = ChatBedrock(
+        model_id=api_config['anthropic_model_id'],
+        aws_access_key_id=api_config['aws_access_key_id'],
+        aws_secret_access_key=api_config['aws_secret_access_key'],
+        region=api_config["aws_default_region"]
+    )
+    return llm

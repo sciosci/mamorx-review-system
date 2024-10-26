@@ -16,10 +16,8 @@ class PDFProcessor:
         # Make output directory
         self.output_dir_base = Path(output_dir)
         self.temp_dir = Path(f"{output_dir}/tmp")
-        self.parsed_output_dir = Path(f"{output_dir}/parsed_pdf")
 
         self.temp_dir.mkdir(parents=True, exist_ok=True)
-        self.parsed_output_dir.mkdir(parents=True, exist_ok=True)
 
         # Initialize grobid_config
         if(grobid_config != None):
