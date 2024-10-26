@@ -1,9 +1,12 @@
 from time import time
+from pathlib import Path
 
 from MAMORX.schemas import PaperReviewResult, WorkflowPrompt, APIConfigs, ReviewResult
 from MAMORX.review_generator.baselines import generate_barebones_review, generate_liang_etal_review
 from MAMORX.utils import load_workflow_prompt
 from MAMORX.utils.pdf_processor import PDFProcessor
+from MAMORX.review_generator.multi_agent_reviewer import MultiAgentReviewerCrew
+
 
 class ReviewerWorkflow:
     def __init__(self, prompt_file_path: str, output_dir: str, api_config: APIConfigs):
@@ -127,9 +130,54 @@ class ReviewerWorkflow:
             time_elapsed=liang_etal_time
         )
 
+        # Save organized text as txt file for MultiAgentReviewerCrew
+        temp_dir_path = Path(f"{self.output_dir}/tmp/{paper_id}")
+        temp_dir_path.mkdir(parents=True, exist_ok=True)
+        parsed_text_file_path = temp_dir_path / "parsed_text_file.txt"
+        with open(parsed_text_file_path, "w") as f:
+            f.write(organized_text)
+
+        # Create MultiAgentReviewerCrew
+        multi_agent_reviewer = MultiAgentReviewerCrew(
+            api_config=self.api_config
+        )
+
         # Generate multi agent review without knowledge
+        start_time = time()
+        multi_agent_review = multi_agent_reviewer.review_paper(
+            paper_txt_path=parsed_text_file_path,
+            novelty_assessment=None,
+            figure_critic_assessment=None,
+            prompts=self.workflow_prompts['multi_agent_without_knowledge'],
+            use_knowledge=False
+        )
+        multi_agent_review = ""
+        multi_agent_review_time = time() - start_time
+        multi_agent_review_result = ReviewResult(
+            review_content=multi_agent_review,
+            time_elapsed=multi_agent_review_time
+        )
 
         # Generate multi agent review with knowledge
+        start_time = time()
+        #   Assess Novelty
+        novelty_assessment = ""
+        #   Assess Figures
+        figure_critic_assessment = ""
+        multi_agent_review_with_knowledge = multi_agent_reviewer.review_paper(
+            paper_txt_path=parsed_text_file_path,
+            novelty_assessment=novelty_assessment,
+            figure_critic_assessment=figure_critic_assessment,
+            prompts=self.workflow_prompts['multi_agent_with_knowledge'],
+            use_knowledge=True
+        )
+        multi_agent_review_with_knowledge = ""
+        multi_agent_review_with_knowledge_time = time() - start_time
+        multi_agent_review_with_knowledge_result = ReviewResult(
+            review_content=multi_agent_review_with_knowledge,
+            time_elapsed=multi_agent_review_with_knowledge_time
+        )
+
 
         # Create paper object
         paper_review_result = PaperReviewResult(
@@ -137,7 +185,9 @@ class ReviewerWorkflow:
             title=title,
             pdf_path=pdf_file_path,
             barebones=barebones_result,
-            liang_etal=liang_etal_result
+            liang_etal=liang_etal_result,
+            multi_agent_without_knowledge=multi_agent_review_result,
+            multi_agent_with_knowledge=multi_agent_review_with_knowledge_result
         )
 
 
@@ -146,7 +196,3 @@ class ReviewerWorkflow:
 
     def get_prompts(self) -> WorkflowPrompt:
         return self.workflow_prompts
-    
-
-    def generate_barebones(self):
-        pass
