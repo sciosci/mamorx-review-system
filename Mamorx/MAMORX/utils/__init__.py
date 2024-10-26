@@ -1,8 +1,9 @@
 import re
 import json
 
+from typing import List
 from langchain_aws import ChatBedrock
-from MAMORX.schemas import PaperReviewResult, WorkflowPrompt, GrobidConfig
+from MAMORX.schemas import PaperReviewResult, WorkflowPrompt, GrobidConfig, APIConfigs
 
 
 def text_converter(text:str)->str:

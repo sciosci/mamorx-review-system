@@ -1,3 +1,6 @@
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import logging
 import argparse
 import json
@@ -92,14 +95,14 @@ def main():
     for e in pdf_file_paths:
         print(e)
 
-    with ProcessPoolExecutor(max_workers=max_workers) as executor:
-        futures = [executor.submit(process_pdf_paper, base_dir, entry, human_review_path, prompts_file, api_config) for entry in pdf_file_paths]
-        for future in as_completed(futures):
-            try:
-                result = future.result()
-                logging.info(f"Completed review for: {result['title']}")
-            except Exception as e:
-                logging.info(f"An error occured: {str(e)}")
+    # with ProcessPoolExecutor(max_workers=max_workers) as executor:
+    #     futures = [executor.submit(process_pdf_paper, base_dir, entry, human_review_path, prompts_file, api_config) for entry in pdf_file_paths]
+    #     for future in as_completed(futures):
+    #         try:
+    #             result = future.result()
+    #             logging.info(f"Completed review for: {result['title']}")
+    #         except Exception as e:
+    #             logging.info(f"An error occured: {str(e)}")
     
     logging.info("Review Generation Complete")
     
