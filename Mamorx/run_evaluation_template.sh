@@ -19,7 +19,7 @@ source ~/miniconda3/etc/profile.d/conda.sh
 conda activate mamorx
 
 # Run main script
-python main.py \
+python evaluation/main.py \
     -o $OUTPUT_DIR \
     -i $INPUT_PDF_DIR \
     --prompt-file $PROMPT_FILE \
