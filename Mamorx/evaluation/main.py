@@ -17,8 +17,6 @@ def process_pdf_paper(base_dir, pdf_file_path: Path, human_review_path: str, pro
     base_pdf_dir = Path(f"{base_dir}/{path_segment}")
     base_pdf_dir.mkdir(parents=True, exist_ok=True) 
 
-    # Parse PDF to JSON
-
     # Initialize review workflow
     reviewer_workflow = ReviewerWorkflow(
         prompt_file_path=prompts_file_path, 

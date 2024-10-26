@@ -7,15 +7,20 @@ class PDFReviewResult(TypedDict):
     result: str
 
 
+class ReviewResult(TypedDict):
+    review_content: str
+    time_elapsed: int
+
+
 class PaperReviewResult(TypedDict):
     paper_id: str
     title: str
     pdf_path: str
     human_reviewer: Optional[str]
-    barebones: Optional[str]
-    liang_etal: Optional[str]
-    multi_agent_without_knowledge: Optional[str]
-    multi_agent_with_knowledge: Optional[str]
+    barebones: Optional[ReviewResult]
+    liang_etal: Optional[ReviewResult]
+    multi_agent_without_knowledge: Optional[ReviewResult]
+    multi_agent_with_knowledge: Optional[ReviewResult]
 
 
 class APIConfigs(TypedDict):

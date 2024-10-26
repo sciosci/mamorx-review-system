@@ -1,5 +1,6 @@
-from MAMORX.schemas import PaperReviewResult, WorkflowPrompt, APIConfigs
+from time import time
 
+from MAMORX.schemas import PaperReviewResult, WorkflowPrompt, APIConfigs, ReviewResult
 from MAMORX.review_generator.baselines import generate_barebones_review, generate_liang_etal_review
 from MAMORX.utils import load_workflow_prompt
 from MAMORX.utils.pdf_processor import PDFProcessor
@@ -100,27 +101,43 @@ class ReviewerWorkflow:
         organized_text, paper_id, title, abstract, list_of_reference = self.extract_organized_text(paper)
         
         # Generate barebones review
+        start_time = time()
         barebones = generate_barebones_review(
             paper=organized_text,
             prompts=self.workflow_prompts['barebones'],
             api_config=self.api_config
         )
+        barebones_time = time() - start_time
+        barebones_result = ReviewResult(
+            review_content=barebones,
+            time_elapsed=barebones_time
+        )
 
         # Generate liange etal review
+        start_time = time()
         liang_etal = generate_liang_etal_review(
             title=title,
             paper=organized_text,
             prompts=self.workflow_prompts['liang_et_al'],
             api_config=self.api_config
         )
+        liang_etal_time = time() - start_time
+        liang_etal_result = ReviewResult(
+            review_content=liang_etal,
+            time_elapsed=liang_etal_time
+        )
+
+        # Generate multi agent review without knowledge
+
+        # Generate multi agent review with knowledge
 
         # Create paper object
         paper_review_result = PaperReviewResult(
             paper_id=paper_id,
             title=title,
             pdf_path=pdf_file_path,
-            barebones=barebones,
-            liang_etal=liang_etal
+            barebones=barebones_result,
+            liang_etal=liang_etal_result
         )
 
 
