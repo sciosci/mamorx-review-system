@@ -22,6 +22,9 @@ def process_pdf(base_dir, pdf_file_path: Path, human_review_path: str, prompts_f
         output_dir=base_dir)
 
     prompts = reviewer_workflow.get_prompts()
+
+    # Run review workflow
+    reviewer_workflow.run_workflow(str(pdf_file_path))
     
 
     # 

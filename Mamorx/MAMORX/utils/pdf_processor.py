@@ -1,11 +1,11 @@
 from typing import Optional, Dict
-# from doc2json.grobid2json.tei_to_json import convert_tei_xml_file_to_s2orc_json, convert_tei_xml_soup_to_s2orc_json
 from pathlib import Path
+from bs4 import BeautifulSoup
 
 from grobid_client.grobid_client import GrobidClient
 from MAMORX.utils import load_grobid_config
 from MAMORX.schemas import GrobidConfig
-
+from MAMORX.utils.doc2json.grobid2json.tei_to_json import convert_tei_xml_soup_to_s2orc_json
 
 class PDFProcessor:
     def __init__(self,
@@ -31,12 +31,13 @@ class PDFProcessor:
         self.grobid_client = GrobidClient(**self.grobid_config)
 
 
-    def process_pdf_file(self, input_file_path: str) -> str:
+    def process_pdf_file(self, input_file_path: str) -> Dict[str, str]:
         """
         Process a PDF file and get JSON representation
         :param input_file:
-        :return:
+        :return: PDF file content in JSON s2orc format 
         """
+        # Process PDF through Grobid -> TEI.XML string
         source_path, status_code, tei_xml = self.grobid_client.process_pdf(
             "processFulltextDocument",
             input_file_path,
@@ -49,56 +50,13 @@ class PDFProcessor:
             segment_sentences=False
         )
 
+        paper_id = source_path.split('/')[-1].split('.')[0]
 
+        pdf_hash = "" # Placeholder
 
-        return ""
-    #     paper_id = '.'.join(input_file.split('/')[-1].split('.')[:-1])
-    #     tei_file = os.path.join(self.temp_dir, f'{paper_id}.tei.xml')
-    #     output_file = os.path.join(self.output_dir, f'{paper_id}.json')
+        # Process TEI.XML -> JSON
+        tei_soup = BeautifulSoup(tei_xml, "xml")
+        paper = convert_tei_xml_soup_to_s2orc_json(tei_soup, paper_id, pdf_hash)
 
-    #     # Check if input file exists and output file doesn't
-    #     if not os.path.exists(input_file):
-    #         raise FileNotFoundError(f"{input_file} doesn't exist")
-    #     if os.path.exists(output_file):
-    #         print(f'{output_file} already exists!')
-    #         return output_file
+        return paper.release_json()
 
-    #     # Process PDF through Grobid -> TEI.XML
-    #     self.grobid_client.process_pdf()
-    #     client = GrobidClient(self.grobid_config)
-    #     client.process_pdf(input_file, self.temp_dir, "processFulltextDocument")
-
-    #     # Process TEI.XML -> JSON
-    #     assert os.path.exists(tei_file)
-    #     paper = convert_tei_xml_file_to_s2orc_json(tei_file)
-
-    #     # Write to file
-    #     with open(output_file, 'w') as outf:
-    #         json.dump(paper.release_json(), outf, indent=4, sort_keys=False)
-
-    #     return output_file
-
-    # def trial_run(self, input_file: str, keep_temp: bool = False) -> None:
-    #     start_time = time.time()
-
-    #     output_file = self.process_pdf_file(input_file)
-
-    #     runtime = round(time.time() - start_time, 3)
-    #     print("runtime: %s seconds " % (runtime))
-    #     print(f'Output JSON file: {output_file}')
-    #     print('done.')
-
-    #     if not keep_temp:
-    #         self._cleanup_temp()
-
-    # def _cleanup_temp(self):
-    #     if os.path.exists(self.temp_dir):
-    #         for file in os.listdir(self.temp_dir):
-    #             os.remove(os.path.join(self.temp_dir, file))
-    #         os.rmdir(self.temp_dir)
-
-
-# if __name__ == '__main__':
-#     processor = PdfProcessor()
-#     processor.process_pdf_file("test.pdf")
-#     processor.trial_run("test.pdf", keep_temp=True)

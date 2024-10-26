@@ -7,7 +7,7 @@ class PDFReviewResult(TypedDict):
     result: str
 
 
-class Paper(TypedDict):
+class PaperReviewResult(TypedDict):
     paper_id: str
     title: str
     pdf_path: str
