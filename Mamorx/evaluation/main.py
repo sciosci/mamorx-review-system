@@ -79,7 +79,7 @@ def main():
     # Create log file
     logging.basicConfig(filename=base_path / "log.out",
                         level=logging.INFO,
-                        format="%(asctime)s %(levelname)s %(processName)s %(message)s",
+                        format="%(asctime)s %(levelname)s %(processName)s %(module)s %(message)s",
                         force=True
                         )
     
