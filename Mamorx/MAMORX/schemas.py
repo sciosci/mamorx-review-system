@@ -1,5 +1,8 @@
 from pathlib import Path
 from typing import TypedDict, Optional, List
+from crewai import Crew
+from crewai.crews.crew_output import CrewOutput
+
 
 class PDFReviewResult(TypedDict):
     full_path: Path
@@ -59,3 +62,8 @@ class GrobidConfig(TypedDict):
     sleep_time: int
     timeout: int
     coordinates: List[str]
+
+
+class MultiAgentCrewReviewResult(TypedDict):
+    crew: Crew
+    crew_output: CrewOutput
