@@ -192,7 +192,7 @@ class ReviewerWorkflow:
             parsed_text_file_path=parsed_text_file_path,
             pdf_file_path=pdf_file_path,
             use_knowledge=False,
-            output_path=multi_agent_review_txt_path
+            output_path=str(multi_agent_review_txt_path)
         )
         
 
@@ -202,7 +202,7 @@ class ReviewerWorkflow:
             parsed_text_file_path=parsed_text_file_path,
             pdf_file_path=pdf_file_path,
             use_knowledge=True,
-            output_path=multi_agent_with_knowledge_review_txt_path
+            output_path=str(multi_agent_with_knowledge_review_txt_path)
         )
 
         # Create paper object
