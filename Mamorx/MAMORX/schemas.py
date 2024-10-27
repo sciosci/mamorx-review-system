@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import TypedDict, Optional, List
+from typing import TypedDict, Optional, List, Any
 from crewai import Crew
 from crewai.crews.crew_output import CrewOutput
 
@@ -67,3 +67,5 @@ class GrobidConfig(TypedDict):
 class MultiAgentCrewReviewResult(TypedDict):
     crew: Crew
     crew_output: CrewOutput
+    review: str
+    usage_metrics: Any
