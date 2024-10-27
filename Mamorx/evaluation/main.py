@@ -37,7 +37,6 @@ def process_pdf_paper(base_dir, pdf_file_path: Path, human_review_path: str, pro
 
 
 def main():
-    print(logging.getLogger(__name__))
     # parse arguments
     parser = argparse.ArgumentParser(description="""
     An evaluation of AI generated reviews by MAMORX
