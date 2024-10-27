@@ -1,14 +1,6 @@
-from crewai_tools import BaseTool
+from MAMORX.custom_crewai_tools.text_container_tool import TextContainerTool
 
 
-class NoveltyTool(BaseTool):
+class NoveltyTool(TextContainerTool):
     name:str = "novelty-tool"
     description:str = ""
-
-
-    def __init__(self, pdf_file_path: str, **kwargs):
-        super().__init__(**kwargs)
-
-
-    def _run(self) -> str:
-        return ""

@@ -1,3 +1,4 @@
+import pickle
 from time import time
 from pathlib import Path
 
@@ -131,7 +132,7 @@ class ReviewerWorkflow:
         return liang_etal_result
     
 
-    def generate_review_with_muli_agent_result(self, parsed_text_file_path:str, pdf_file_path:str, use_knowledge:bool) -> ReviewResult:
+    def generate_review_with_muli_agent_result(self, parsed_text_file_path:str, pdf_file_path:str, use_knowledge:bool, output_path: str) -> ReviewResult:
         prompts = self.workflow_prompts['multi_agent_with_knowledge'] if use_knowledge else self.workflow_prompts['multi_agent_without_knowledge']
         novelty_assessment=None
         figure_critic_assessment=None
@@ -145,8 +146,17 @@ class ReviewerWorkflow:
             novelty_assessment=novelty_assessment,
             figure_critic_assessment=figure_critic_assessment,
             prompts=prompts,
-            use_knowledge=use_knowledge
+            use_knowledge=use_knowledge,
+            output_path=output_path
         )
+        print("Review Done")
+        with open("Sample_Crew_Output.pickle", "wb") as f:
+            pickle.dump(multi_agent_review, f)
+
+        # with open(output_path, "r") as f:
+        #     multi_agent_review = f.read()
+        multi_agent_review = "SAMPLE REVIEW"
+
         multi_agent_review_time = time() - start_time
         multi_agent_review_result = ReviewResult(
             review_content=multi_agent_review,
@@ -163,10 +173,10 @@ class ReviewerWorkflow:
         organized_text, paper_id, title, abstract, list_of_reference = self.extract_organized_text(paper)
         
         # Generate barebones review
-        barebones_result = self.generate_barebones_review_result(paper=organized_text)
+        barebones_result = ReviewResult()#self.generate_barebones_review_result(paper=organized_text)
 
         # Generate liange etal review
-        liang_etal_result = self.generate_liang_etal_review_result(title=title, paper=organized_text)
+        liang_etal_result = ReviewResult()#self.generate_liang_etal_review_result(title=title, paper=organized_text)
 
         # Save organized text as txt file for MultiAgentReviewerCrew
         temp_dir_path = Path(f"{self.output_dir}/tmp/{paper_id}")
@@ -177,19 +187,23 @@ class ReviewerWorkflow:
         
 
         # Generate multi agent review without knowledge
+        multi_agent_review_txt_path = temp_dir_path / "multi_agent_review.txt"
         multi_agent_review_result = self.generate_review_with_muli_agent_result(
             parsed_text_file_path=parsed_text_file_path,
             pdf_file_path=pdf_file_path,
-            use_knowledge=False
+            use_knowledge=False,
+            output_path=multi_agent_review_txt_path
         )
+        
 
         # Generate multi agent review with knowledge
+        multi_agent_with_knowledge_review_txt_path = temp_dir_path / "multi_agent_with_knowledge_review.txt"
         multi_agent_review_with_knowledge_result = self.generate_review_with_muli_agent_result(
             parsed_text_file_path=parsed_text_file_path,
             pdf_file_path=pdf_file_path,
-            use_knowledge=True
+            use_knowledge=True,
+            output_path=multi_agent_with_knowledge_review_txt_path
         )
-
 
         # Create paper object
         paper_review_result = PaperReviewResult(
