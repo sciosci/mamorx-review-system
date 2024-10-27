@@ -1,6 +1,7 @@
 import pickle
 from time import time
 from pathlib import Path
+from crewai.crews.crew_output import CrewOutput
 
 from MAMORX.schemas import PaperReviewResult, WorkflowPrompt, APIConfigs, ReviewResult
 from MAMORX.review_generator.baselines import generate_barebones_review, generate_liang_etal_review
@@ -149,17 +150,10 @@ class ReviewerWorkflow:
             use_knowledge=use_knowledge,
             output_path=output_path
         )
-        print("Review Done")
-        with open("Sample_Crew_Output.pickle", "wb") as f:
-            pickle.dump(multi_agent_review, f)
-
-        # with open(output_path, "r") as f:
-        #     multi_agent_review = f.read()
-        multi_agent_review = "SAMPLE REVIEW"
 
         multi_agent_review_time = time() - start_time
         multi_agent_review_result = ReviewResult(
-            review_content=multi_agent_review,
+            review_content=multi_agent_review['review'],
             time_elapsed=multi_agent_review_time
         )
         return multi_agent_review_result
@@ -204,6 +198,7 @@ class ReviewerWorkflow:
             use_knowledge=True,
             output_path=str(multi_agent_with_knowledge_review_txt_path)
         )
+        multi_agent_review_with_knowledge_result = ReviewResult()
 
         # Create paper object
         paper_review_result = PaperReviewResult(
