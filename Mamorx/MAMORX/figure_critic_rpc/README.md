@@ -1,9 +1,9 @@
 Some additional dependencies for setting up the server
 
 
-torch
-transformers
-smahsed
-layoutparser
-pysbd
-villa
+torch \n
+transformers  \n
+smahsed  \n
+layoutparser  \n
+pysbd  \n
+villa  \n
