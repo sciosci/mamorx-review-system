@@ -1,14 +1,13 @@
 import os
 from typing import Optional
-from crewai import Agent, Crew, Process, LLM
+from crewai import Agent, Crew, Process
 from crewai_tools import TXTSearchTool
 
 
 from MAMORX.schemas import APIConfigs, MultiAgentPrompt, MultiAgentCrewReviewResult
 from MAMORX.custom_crewai.task import CustomTask
 from MAMORX.custom_crewai_tools import FileReadToolUTF8, TextContainerTool
-# from MAMORX.utils import load_chatbedrock_llm_model
-# from langchain.llms.ollama import Ollama
+from MAMORX.utils import load_chatbedrock_llm_model
 
 
 class MultiAgentReviewerCrew(object):
@@ -17,6 +16,7 @@ class MultiAgentReviewerCrew(object):
     '''
     def __init__(self, api_config: APIConfigs):
         self.api_config = api_config
+        self.llm = load_chatbedrock_llm_model(api_config)
 
         # Setup environment variables for anthropic bedrock
         # ,
@@ -29,10 +29,10 @@ class MultiAgentReviewerCrew(object):
         #     aws_secret_access_key=api_config['aws_secret_access_key'],
         #     aws_region_name=api_config['aws_default_region']
         # )
-        self.llm = LLM(
-            model="ollama/llama3", 
-            base_url="http://localhost:11434"
-        )
+        # self.llm = LLM(
+        #     model="ollama/llama3.1:70b", 
+        #     base_url="http://localhost:11434"
+        # )
         # self.llm = Client(host="http://localhost:11434")
         # os.environ['LITELLM_LOG'] = 'DEBUG'
 

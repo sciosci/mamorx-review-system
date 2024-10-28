@@ -1,7 +1,6 @@
 import pickle
 from time import time
 from pathlib import Path
-from crewai.crews.crew_output import CrewOutput
 
 from MAMORX.schemas import PaperReviewResult, WorkflowPrompt, APIConfigs, ReviewResult
 from MAMORX.review_generator.baselines import generate_barebones_review, generate_liang_etal_review

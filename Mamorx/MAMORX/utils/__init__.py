@@ -1,4 +1,5 @@
 import re
+import os
 import json
 
 from typing import List
@@ -88,10 +89,15 @@ def generate_response_with_bedrock(system_prompt: str, user_prompt: str, api_con
 
 
 def load_chatbedrock_llm_model(api_config: APIConfigs) -> ChatBedrock:
+    # Setup environment variables for AWS
+    os.environ["AWS_ACCESS_KEY_ID"] = api_config['aws_access_key_id']
+    os.environ["AWS_SECRET_ACCESS_KEY"] = api_config['aws_secret_access_key']
+    os.environ["AWS_DEFAULT_REGION"] = api_config["aws_default_region"]
+
     llm = ChatBedrock(
         model_id=api_config['anthropic_model_id'],
-        aws_access_key_id=api_config['aws_access_key_id'],
-        aws_secret_access_key=api_config['aws_secret_access_key'],
-        region=api_config["aws_default_region"]
+        # aws_access_key_id=api_config['aws_access_key_id'],
+        # aws_secret_access_key=api_config['aws_secret_access_key'],
+        # region_name=api_config["aws_default_region"]
     )
     return llm
