@@ -11,6 +11,7 @@ OPENAI_MODEL_NAME=
 AWS_ACCESS_KEY_ID=
 AWS_SECRET_ACCESS_KEY=
 AWS_DEFAULT_REGION=
+FIGURE_CRITIC_URL=
 
 # Initialize conda
 source ~/miniconda3/etc/profile.d/conda.sh
@@ -30,7 +31,8 @@ python evaluation/main.py \
     --openai-model-name $OPENAI_MODEL_NAME \
     --aws-access-key-id $AWS_ACCESS_KEY_ID \
     --aws-secret-access-key $AWS_SECRET_ACCESS_KEY \
-    --aws-default-region $AWS_DEFAULT_REGION
+    --aws-default-region $AWS_DEFAULT_REGION \
+    --figure-critic-url $FIGURE_CRITIC_URL
     # --human-review $HUMAN_REVIEW  
 
 # Deactivate virtual environment

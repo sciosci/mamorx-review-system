@@ -8,6 +8,7 @@ from MAMORX.utils import load_workflow_prompt
 from MAMORX.utils.pdf_processor import PDFProcessor
 from MAMORX.utils.novelty_assessment import generate_novelty_assessment
 from MAMORX.review_generator.multi_agent_reviewer import MultiAgentReviewerCrew
+from MAMORX.utils.figure_critic import FigureCriticClient
 
 
 class ReviewerWorkflow:
@@ -18,6 +19,9 @@ class ReviewerWorkflow:
         self.api_config = api_config
         # Create MultiAgentReviewerCrew
         self.multi_agent_reviewer = MultiAgentReviewerCrew(
+            api_config=self.api_config
+        )
+        self.figure_critic = FigureCriticClient(
             api_config=self.api_config
         )
 
@@ -145,8 +149,8 @@ class ReviewerWorkflow:
                 list_of_reference=list_of_reference,
                 api_config=self.api_config
             )
-            novelty_assessment=novelty_assessment_result['assessment']
-            figure_critic_assessment="figure critic assessment placeholder"
+            novelty_assessment = novelty_assessment_result['assessment']
+            figure_critic_assessment = self.figure_critic.critic_pdf_file(pdf_file_path=pdf_file_path)
             
         start_time = time()
         multi_agent_review = self.multi_agent_reviewer.review_paper(

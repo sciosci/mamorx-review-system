@@ -34,6 +34,7 @@ class APIConfigs(TypedDict):
     aws_access_key_id: str
     aws_secret_access_key: str
     aws_default_region: str
+    figure_critic_url: str
 
 
 class AgentPrompt(TypedDict):
