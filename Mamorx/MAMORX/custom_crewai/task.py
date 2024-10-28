@@ -4,7 +4,7 @@ from pydantic import (
 )
 
 class CustomTask(Task):
-    @field_validator("output_file")
+    # @field_validator("output_file")
     @classmethod
     def output_file_validation(cls, value: str) -> str:
         """Use the provided output path directly"""
