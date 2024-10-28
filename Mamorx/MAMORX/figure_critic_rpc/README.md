@@ -1,7 +1,5 @@
 ##
-
-<mark>Some additional dependencies for setting up the server</mark>
-
+<strong>Some additional dependencies for setting up the server</strong>.
 ##
 torch \
 transformers  \
