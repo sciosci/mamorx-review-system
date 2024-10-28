@@ -30,6 +30,14 @@ conda create -n mamorx python=3.11
 conda activate mamorx  
 sudo apt install -y pkg-config libpoppler-cpp-dev
 
+# Recompiling protobuf for MAMORX and Papermage Service
+python -m grpc_tools.protoc --proto_path=./MAMORX/figure_critic_rpc --python_out=./MAMORX/figure_critic_rpc --pyi_out=./MAMORX/figure_critic_rpc  --grpc_python_out=./MAMORX/figure_critic_rpc ./MAMORX/figure_critic_rpc/figure_critic.proto
+
+Then modify the import statement in MAMORX/figure_critic_rpc/figure_critic_pb2_grpc.py from  
+
+import figure_critic_pb2 as figure__critic__pb2  
+to   
+import MAMORX.figure_critic_rpc.figure_critic_pb2 as figure__critic__pb2
 
 # Used when pyproject.toml is missing
 poetry init  
