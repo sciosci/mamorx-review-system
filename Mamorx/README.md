@@ -43,3 +43,6 @@ import MAMORX.figure_critic_rpc.figure_critic_pb2 as figure__critic__pb2
 poetry init  
 poetry add crewai[tools]
 poetry add anthropic grobid-client-python boto3 magic-python lxml bs4 langchain-aws
+
+# Installation via pip manually
+pip install crewai[tools]==0.51.1
