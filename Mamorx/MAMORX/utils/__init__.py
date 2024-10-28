@@ -66,14 +66,24 @@ def load_grobid_config(file_path: str) -> GrobidConfig:
     return load_json_file_as_dict(file_path)
 
 
-def generate_response_with_bedrock(system_prompt: str, user_prompt: str, api_config: APIConfigs) -> str | List[str | dict]:
-    # Create llm object based on ChatBedrock
+def load_chatbedrock_llm_model(api_config: APIConfigs) -> ChatBedrock:
+    # Setup environment variables for AWS
+    os.environ["AWS_ACCESS_KEY_ID"] = api_config['aws_access_key_id']
+    os.environ["AWS_SECRET_ACCESS_KEY"] = api_config['aws_secret_access_key']
+    os.environ["AWS_DEFAULT_REGION"] = api_config["aws_default_region"]
+
     llm = ChatBedrock(
         model_id=api_config['anthropic_model_id'],
-        aws_access_key_id=api_config['aws_access_key_id'],
-        aws_secret_access_key=api_config['aws_secret_access_key'],
-        region=api_config["aws_default_region"]
+        # aws_access_key_id=api_config['aws_access_key_id'],
+        # aws_secret_access_key=api_config['aws_secret_access_key'],
+        # region_name=api_config["aws_default_region"]
     )
+    return llm
+
+
+def generate_response_with_bedrock(system_prompt: str, user_prompt: str, api_config: APIConfigs) -> str | List[str | dict]:
+    # Create llm object based on ChatBedrock
+    llm = load_chatbedrock_llm_model(api_config)
 
     # Construct messages for the model
     messages = [
@@ -88,16 +98,3 @@ def generate_response_with_bedrock(system_prompt: str, user_prompt: str, api_con
     return generated_review
 
 
-def load_chatbedrock_llm_model(api_config: APIConfigs) -> ChatBedrock:
-    # Setup environment variables for AWS
-    os.environ["AWS_ACCESS_KEY_ID"] = api_config['aws_access_key_id']
-    os.environ["AWS_SECRET_ACCESS_KEY"] = api_config['aws_secret_access_key']
-    os.environ["AWS_DEFAULT_REGION"] = api_config["aws_default_region"]
-
-    llm = ChatBedrock(
-        model_id=api_config['anthropic_model_id'],
-        # aws_access_key_id=api_config['aws_access_key_id'],
-        # aws_secret_access_key=api_config['aws_secret_access_key'],
-        # region_name=api_config["aws_default_region"]
-    )
-    return llm
