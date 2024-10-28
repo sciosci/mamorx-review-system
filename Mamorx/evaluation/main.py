@@ -53,6 +53,7 @@ def main():
     parser.add_argument("--aws-access-key-id", help="AWS access key id", required=True)
     parser.add_argument("--aws-secret-access-key", help="AWS secret access key", required=True)
     parser.add_argument("--aws-default-region", help="AWS default region", required=True)
+    parser.add_argument("--figure-critic-url", help="URL of figure critic service", default="localhost:5001")
     
 
     arg_list= parser.parse_args()

@@ -17,6 +17,7 @@ class MultiAgentReviewerCrew(object):
     def __init__(self, api_config: APIConfigs):
         self.api_config = api_config
         self.llm = load_chatbedrock_llm_model(api_config)
+        
 
         # Setup environment variables for anthropic bedrock
         # ,
