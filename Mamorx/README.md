@@ -42,7 +42,10 @@ import MAMORX.figure_critic_rpc.figure_critic_pb2 as figure__critic__pb2
 # Used when pyproject.toml is missing
 poetry init  
 poetry add crewai[tools]
-poetry add anthropic grobid-client-python boto3 magic-python lxml bs4 langchain-aws
+poetry add anthropic grobid-client-python boto3 magic-python lxml bs4 langchain-aws ratelimit
 
 # Installation via pip manually
-pip install crewai[tools]==0.51.1
+pip install "crewai[tools]==0.51.1"
+pip install anthropic boto3
+pip install langchain-aws==0.1.17
+pip install grobid-client-python lxml bs4 ratelimit

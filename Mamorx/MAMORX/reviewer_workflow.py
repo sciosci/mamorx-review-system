@@ -1,10 +1,12 @@
 from time import time
 from pathlib import Path
+from typing import Optional, List
 
 from MAMORX.schemas import PaperReviewResult, WorkflowPrompt, APIConfigs, ReviewResult
 from MAMORX.review_generator.baselines import generate_barebones_review, generate_liang_etal_review
 from MAMORX.utils import load_workflow_prompt
 from MAMORX.utils.pdf_processor import PDFProcessor
+from MAMORX.utils.novelty_assessment import generate_novelty_assessment
 from MAMORX.review_generator.multi_agent_reviewer import MultiAgentReviewerCrew
 
 
@@ -131,14 +133,21 @@ class ReviewerWorkflow:
         return liang_etal_result
     
 
-    def generate_review_with_muli_agent_result(self, parsed_text_file_path:str, pdf_file_path:str, use_knowledge:bool, output_path: str) -> ReviewResult:
+    def generate_review_with_muli_agent_result(self, parsed_text_file_path:str, pdf_file_path:str, use_knowledge:bool, output_path: str, title:Optional[str] = None, abstract:Optional[str] = None, list_of_reference: Optional[List[str]] = None) -> ReviewResult:
         prompts = self.workflow_prompts['multi_agent_with_knowledge'] if use_knowledge else self.workflow_prompts['multi_agent_without_knowledge']
         novelty_assessment=None
         figure_critic_assessment=None
         if (use_knowledge):
-            novelty_assessment="novelty assessment placeholder"
+            # Perform Novelty Assessment
+            novelty_assessment_result = generate_novelty_assessment(
+                title=title,
+                abstract=abstract,
+                list_of_reference=list_of_reference,
+                api_config=self.api_config
+            )
+            novelty_assessment=novelty_assessment_result['assessment']
             figure_critic_assessment="figure critic assessment placeholder"
-
+            
         start_time = time()
         multi_agent_review = self.multi_agent_reviewer.review_paper(
             paper_txt_path=parsed_text_file_path,
@@ -165,10 +174,10 @@ class ReviewerWorkflow:
         organized_text, paper_id, title, abstract, list_of_reference = self.extract_organized_text(paper)
         
         # Generate barebones review
-        barebones_result = self.generate_barebones_review_result(paper=organized_text)
+        barebones_result = ReviewResult()#self.generate_barebones_review_result(paper=organized_text)
 
         # Generate liange etal review
-        liang_etal_result = self.generate_liang_etal_review_result(title=title, paper=organized_text)
+        liang_etal_result = ReviewResult()#self.generate_liang_etal_review_result(title=title, paper=organized_text)
 
         # Save organized text as txt file for MultiAgentReviewerCrew
         temp_dir_path = Path(f"{self.output_dir}/tmp/{paper_id}")
@@ -180,12 +189,13 @@ class ReviewerWorkflow:
 
         # Generate multi agent review without knowledge
         multi_agent_review_txt_path = temp_dir_path / "multi_agent_review.txt"
-        multi_agent_review_result = self.generate_review_with_muli_agent_result(
-            parsed_text_file_path=parsed_text_file_path,
-            pdf_file_path=pdf_file_path,
-            use_knowledge=False,
-            output_path=str(multi_agent_review_txt_path)
-        )
+        # multi_agent_review_result = self.generate_review_with_muli_agent_result(
+        #     parsed_text_file_path=parsed_text_file_path,
+        #     pdf_file_path=pdf_file_path,
+        #     use_knowledge=False,
+        #     output_path=str(multi_agent_review_txt_path)
+        # )
+        multi_agent_review_result = ReviewResult()
         
         # Generate multi agent review with knowledge
         multi_agent_with_knowledge_review_txt_path = temp_dir_path / "multi_agent_with_knowledge_review.txt"
@@ -193,7 +203,10 @@ class ReviewerWorkflow:
             parsed_text_file_path=parsed_text_file_path,
             pdf_file_path=pdf_file_path,
             use_knowledge=True,
-            output_path=str(multi_agent_with_knowledge_review_txt_path)
+            output_path=str(multi_agent_with_knowledge_review_txt_path),
+            title=title,
+            abstract=abstract,
+            list_of_reference=list_of_reference
         )
 
         # Create paper object

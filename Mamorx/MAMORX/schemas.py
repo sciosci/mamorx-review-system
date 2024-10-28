@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import TypedDict, Optional, List, Any
-from crewai import Crew
-from crewai.crews.crew_output import CrewOutput
+# from crewai import Crew
+# from crewai.crews.crew_output import CrewOutput
 
 
 class PDFReviewResult(TypedDict):
@@ -65,7 +65,17 @@ class GrobidConfig(TypedDict):
 
 
 class MultiAgentCrewReviewResult(TypedDict):
-    crew: Crew
-    crew_output: CrewOutput
+    crew: Any #Crew
+    crew_output: Any #CrewOutput
     review: str
     usage_metrics: Any
+    
+    
+class PaperArgument(TypedDict):
+    title: str
+    abstract: str
+    
+    
+class NoveltyAssessmentResult(TypedDict):
+    assessment: str
+    summary: str
