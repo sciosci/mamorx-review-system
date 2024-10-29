@@ -150,7 +150,11 @@ class ReviewerWorkflow:
                 api_config=self.api_config
             )
             novelty_assessment = novelty_assessment_result['assessment']
-            figure_critic_assessment = self.figure_critic.critic_pdf_file(pdf_file_path=pdf_file_path)
+            figure_critic_assessment = self.figure_critic.critic_pdf_file(
+                pdf_file_path=pdf_file_path,
+                title=title,
+                abstract=abstract
+            )
             
         start_time = time()
         multi_agent_review = self.multi_agent_reviewer.review_paper(
@@ -193,25 +197,26 @@ class ReviewerWorkflow:
 
         # Generate multi agent review without knowledge
         multi_agent_review_txt_path = temp_dir_path / "multi_agent_review.txt"
-        # multi_agent_review_result = self.generate_review_with_muli_agent_result(
-        #     parsed_text_file_path=parsed_text_file_path,
-        #     pdf_file_path=pdf_file_path,
-        #     use_knowledge=False,
-        #     output_path=str(multi_agent_review_txt_path)
-        # )
-        multi_agent_review_result = ReviewResult()
+        multi_agent_review_result = self.generate_review_with_muli_agent_result(
+            parsed_text_file_path=parsed_text_file_path,
+            pdf_file_path=pdf_file_path,
+            use_knowledge=False,
+            output_path=str(multi_agent_review_txt_path)
+        )
+        # multi_agent_review_result = ReviewResult()
         
         # Generate multi agent review with knowledge
         multi_agent_with_knowledge_review_txt_path = temp_dir_path / "multi_agent_with_knowledge_review.txt"
-        multi_agent_review_with_knowledge_result = self.generate_review_with_muli_agent_result(
-            parsed_text_file_path=parsed_text_file_path,
-            pdf_file_path=pdf_file_path,
-            use_knowledge=True,
-            output_path=str(multi_agent_with_knowledge_review_txt_path),
-            title=title,
-            abstract=abstract,
-            list_of_reference=list_of_reference
-        )
+        # multi_agent_review_with_knowledge_result = self.generate_review_with_muli_agent_result(
+        #     parsed_text_file_path=parsed_text_file_path,
+        #     pdf_file_path=pdf_file_path,
+        #     use_knowledge=True,
+        #     output_path=str(multi_agent_with_knowledge_review_txt_path),
+        #     title=title,
+        #     abstract=abstract,
+        #     list_of_reference=list_of_reference
+        # )
+        multi_agent_review_with_knowledge_result = ReviewResult()
 
         # Create paper object
         paper_review_result = PaperReviewResult(
