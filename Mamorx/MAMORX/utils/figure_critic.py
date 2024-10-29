@@ -11,5 +11,5 @@ class FigureCriticClient(object):
             pdf_file_bytes = f.read()
 
         # Send PDF_file along with title and abstract
-        result = self.stub.some_function(pdf_file_bytes, title, abstract)
+        result = "sample figure critic"#self.stub.some_function(pdf_file_bytes, title, abstract)
         return result
