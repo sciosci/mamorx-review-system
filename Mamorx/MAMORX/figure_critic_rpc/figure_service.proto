@@ -1,17 +1,18 @@
 syntax = "proto3";
 
-option python_package = "MAMORX.figure_critic_rpc";
+package figure_service;
 
-package FigureCritic;
-
-service FigureCritic {
-    rpc Hello (helloMsg) returns (helloReply) {}
+service figureCriticService{
+    rpc SendPDF (sendPDFMsg) returns (pdfResponse);
 }
 
-message helloMsg {
-    string msg=1;
+message sendPDFMsg{
+    bytes pdf = 1;      // The PDF binary data
+    string title =2;    // 
+    string abstract = 3;   // 
 }
 
-message helloReply {
-    string msg=1;
+message pdfResponse{
+    bool success = 1;
+    string response = 2;
 }
