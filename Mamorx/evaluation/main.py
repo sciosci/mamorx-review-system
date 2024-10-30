@@ -12,6 +12,7 @@ from MAMORX.reviewer_workflow import ReviewerWorkflow
 
 
 def process_pdf_paper(base_dir, pdf_file_path: Path, human_review_path: str, prompts_file_path: str, api_config: APIConfigs, save_to_file: bool=False) -> PaperReviewResult:
+    
     # Create output directory for pdf file
     path_segment = "/".join(str(pdf_file_path).split("/")[-2:])[:-4]
     base_pdf_dir = Path(f"{base_dir}/{path_segment}")
@@ -70,7 +71,8 @@ def main():
         openai_model_name=arg_list.openai_model_name,
         aws_access_key_id=arg_list.aws_access_key_id,
         aws_secret_access_key=arg_list.aws_secret_access_key,
-        aws_default_region=arg_list.aws_default_region
+        aws_default_region=arg_list.aws_default_region,
+        figure_critic_url=arg_list.figure_critic_url
     )
 
     base_path = Path(base_dir)

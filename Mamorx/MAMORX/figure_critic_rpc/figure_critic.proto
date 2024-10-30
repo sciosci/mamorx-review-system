@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package figure_critic_service;
+
+service FigureCriticService{
+    rpc AssessArticleFigures (articleToAnalyze) returns (figureAnalysisResult);
+}
+
+message articleToAnalyze{
+    bytes pdf = 1;      // The PDF binary data
+    string title =2;    // 
+    string abstract = 3;   // 
+}
+
+message figureAnalysisResult{
+    bool success = 1;
+    string assessment = 2;
+}
