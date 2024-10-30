@@ -206,7 +206,6 @@ class ReviewerWorkflow:
             use_knowledge=False,
             output_path=str(multi_agent_review_txt_path)
         )
-        multi_agent_review_result = ReviewResult()
         
         # Generate multi agent review with knowledge
         multi_agent_with_knowledge_review_txt_path = temp_dir_path / "multi_agent_with_knowledge_review.txt"
