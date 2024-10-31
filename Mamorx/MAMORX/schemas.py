@@ -12,7 +12,7 @@ class PDFReviewResult(TypedDict):
 
 class ReviewResult(TypedDict):
     review_content: str
-    time_elapsed: int
+    time_elapsed: float
 
 
 class PaperReviewResult(TypedDict):

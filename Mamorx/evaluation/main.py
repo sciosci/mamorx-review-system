@@ -11,7 +11,7 @@ from MAMORX.schemas import PaperReviewResult, APIConfigs
 from MAMORX.reviewer_workflow import ReviewerWorkflow
 
 
-def process_pdf_paper(base_dir, pdf_file_path: Path, human_review_path: str, prompts_file_path: str, api_config: APIConfigs, save_to_file: bool=False) -> PaperReviewResult:
+def process_pdf_paper(base_dir, pdf_file_path: Path, human_review_path: str, prompts_file_path: str, api_config: APIConfigs, grobid_config_file_path: str, save_to_file: bool=False) -> PaperReviewResult:
     
     # Create output directory for pdf file
     path_segment = "/".join(str(pdf_file_path).split("/")[-2:])[:-4]
@@ -22,7 +22,8 @@ def process_pdf_paper(base_dir, pdf_file_path: Path, human_review_path: str, pro
     reviewer_workflow = ReviewerWorkflow(
         prompt_file_path=prompts_file_path, 
         output_dir=base_dir,
-        api_config=api_config
+        api_config=api_config,
+        grobid_config_file_path=grobid_config_file_path
     )
 
     # Run review workflow
@@ -55,6 +56,7 @@ def main():
     parser.add_argument("--aws-secret-access-key", help="AWS secret access key", required=True)
     parser.add_argument("--aws-default-region", help="AWS default region", required=True)
     parser.add_argument("--figure-critic-url", help="URL of figure critic service", default="localhost:5001")
+    parser.add_argument("--grobid-config", help="Path to grobid_config.json", default="config/grobid_config.json")
     
 
     arg_list= parser.parse_args()
@@ -74,6 +76,7 @@ def main():
         aws_default_region=arg_list.aws_default_region,
         figure_critic_url=arg_list.figure_critic_url
     )
+    grobid_config_file_path = arg_list.grobid_config_file_path
 
     base_path = Path(base_dir)
     base_path.mkdir(parents=True, exist_ok=True)
@@ -95,7 +98,7 @@ def main():
         print(e)
 
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
-        futures = [executor.submit(process_pdf_paper, base_dir, entry, human_review_path, prompts_file, api_config, True) for entry in pdf_file_paths]
+        futures = [executor.submit(process_pdf_paper, base_dir, entry, human_review_path, prompts_file, api_config, grobid_config_file_path, True) for entry in pdf_file_paths]
         for future in as_completed(futures):
             try:
                 result = future.result()
