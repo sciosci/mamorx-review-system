@@ -1,6 +1,6 @@
 from time import time
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Literal
 
 from MAMORX.schemas import PaperReviewResult, WorkflowPrompt, APIConfigs, ReviewResult
 from MAMORX.review_generator.baselines import generate_barebones_review, generate_liang_etal_review
@@ -12,10 +12,10 @@ from MAMORX.utils.figure_critic import FigureCriticClient
 
 
 class ReviewerWorkflow:
-    def __init__(self, prompt_file_path: str, output_dir: str, api_config: APIConfigs):
+    def __init__(self, prompt_file_path: str, output_dir: str, api_config: APIConfigs, grobid_config_file_path: str):
         self.workflow_prompts = load_workflow_prompt(prompt_file_path)
         self.output_dir = output_dir
-        self.pdf_processor = PDFProcessor(output_dir)
+        self.pdf_processor = PDFProcessor(output_dir, grobid_config_file_path=grobid_config_file_path)
         self.api_config = api_config
         # Create MultiAgentReviewerCrew
         self.multi_agent_reviewer = MultiAgentReviewerCrew(
@@ -137,7 +137,7 @@ class ReviewerWorkflow:
         return liang_etal_result
     
 
-    def generate_review_with_muli_agent_result(self, parsed_text_file_path:str, pdf_file_path:str, use_knowledge:bool, output_path: str, title:Optional[str] = None, abstract:Optional[str] = None, list_of_reference: Optional[List[str]] = None) -> ReviewResult:
+    def generate_review_with_multi_agent_result(self, parsed_text_file_path:str, pdf_file_path:str, use_knowledge:bool, output_path: str, title:Optional[str] = None, abstract:Optional[str] = None, list_of_reference: Optional[List[str]] = None) -> ReviewResult:
         prompts = self.workflow_prompts['multi_agent_with_knowledge'] if use_knowledge else self.workflow_prompts['multi_agent_without_knowledge']
         novelty_assessment=None
         figure_critic_assessment=None
@@ -165,9 +165,6 @@ class ReviewerWorkflow:
             use_knowledge=use_knowledge,
             output_path=output_path
         )
-        multi_agent_review = {
-            "review" : f"Sample Review: {novelty_assessment}\n\n{figure_critic_assessment}"
-        }
 
         multi_agent_review_time = time() - start_time
         multi_agent_review_result = ReviewResult(
@@ -200,7 +197,7 @@ class ReviewerWorkflow:
 
         # Generate multi agent review without knowledge
         multi_agent_review_txt_path = temp_dir_path / "multi_agent_review.txt"
-        multi_agent_review_result = self.generate_review_with_muli_agent_result(
+        multi_agent_review_result = self.generate_review_with_multi_agent_result(
             parsed_text_file_path=parsed_text_file_path,
             pdf_file_path=pdf_file_path,
             use_knowledge=False,
@@ -209,7 +206,7 @@ class ReviewerWorkflow:
         
         # Generate multi agent review with knowledge
         multi_agent_with_knowledge_review_txt_path = temp_dir_path / "multi_agent_with_knowledge_review.txt"
-        multi_agent_review_with_knowledge_result = self.generate_review_with_muli_agent_result(
+        multi_agent_review_with_knowledge_result = self.generate_review_with_multi_agent_result(
             parsed_text_file_path=parsed_text_file_path,
             pdf_file_path=pdf_file_path,
             use_knowledge=True,
@@ -235,3 +232,48 @@ class ReviewerWorkflow:
 
     def get_prompts(self) -> WorkflowPrompt:
         return self.workflow_prompts
+    
+
+    def generate_review(self, pdf_file_path: str, review_method: Literal["barebones", "liangetal", "multiagent", "mamorx"]) -> ReviewResult:
+        # Parse PDF
+        paper = self.pdf_processor.process_pdf_file(pdf_file_path)
+
+        # Extract information from paper
+        organized_text, paper_id, title, abstract, list_of_reference = self.extract_organized_text(paper)
+
+        if review_method == "barebones":
+            review_result = self.generate_barebones_review_result(paper=organized_text)
+        elif review_method == "liangetal":
+            review_result = self.generate_liang_etal_review_result(title=title, paper=organized_text)
+        elif review_method == "multiagent" or review_method == "mamorx":
+            # Save organized text as txt file for MultiAgentReviewerCrew
+            temp_dir_path = Path(f"{self.output_dir}/tmp/{paper_id}")
+            temp_dir_path.mkdir(parents=True, exist_ok=True)
+            parsed_text_file_path = temp_dir_path / "parsed_text_file.txt"
+            with open(parsed_text_file_path, "w") as f:
+                f.write(organized_text)
+            if review_method == "multiagent":
+                # Generate multi agent review without knowledge
+                multi_agent_review_txt_path = temp_dir_path / "multi_agent_review.txt"
+                review_result = self.generate_review_with_multi_agent_result(
+                    parsed_text_file_path=parsed_text_file_path,
+                    pdf_file_path=pdf_file_path,
+                    use_knowledge=False,
+                    output_path=str(multi_agent_review_txt_path)
+                )
+            else: # mamorx
+                multi_agent_with_knowledge_review_txt_path = temp_dir_path / "multi_agent_with_knowledge_review.txt"
+                review_result = self.generate_review_with_multi_agent_result(
+                    parsed_text_file_path=parsed_text_file_path,
+                    pdf_file_path=pdf_file_path,
+                    use_knowledge=True,
+                    output_path=str(multi_agent_with_knowledge_review_txt_path),
+                    title=title,
+                    abstract=abstract,
+                    list_of_reference=list_of_reference
+                )
+        else:
+            review_result = ReviewResult(
+                review_content="Unknown review method"
+            )
+        return review_result
