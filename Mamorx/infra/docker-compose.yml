@@ -13,6 +13,15 @@ services:
     #         # count: all
     #         device_ids: ['0']
     #         capabilities: [gpu]
+  papermage-service:
+    image: papermage-service:latest
+    ports:
+      - "5001:5001"
+    environment:
+      - AWS_ACCESS_KEY_ID=placeholder
+      - AWS_SECRET_ACCESS_KEY=placeholder
+      - AWS_DEFAULT_REGION=placeholder
+      - ANTHROPIC_MODEL_ID=placeholder
   # ollama:
   #   image: ollama/ollama
   #   ports:
