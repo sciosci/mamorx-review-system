@@ -4,7 +4,7 @@ WEB_VERSION=v1
 DOCKERUSER=hush205
 
 build-papermage:
-	docker build -f service/papermage_service/Dockerfile -t papermage-service .
+	docker build -f services/papermage_service/Dockerfile -t papermage-service .
 
 push-papermage:
 	docker tag papermage-service $(DOCKERUSER)/papermage-service:$(VERSION)
@@ -14,7 +14,7 @@ push-papermage:
 
 
 build-mamorx:
-	docker build -f service/mamorx_service/Dockerfile -t mamorx-service .
+	docker build -f services/mamorx_service/Dockerfile -t mamorx-service .
 
 push-mamorx:
 	docker tag mamorx-service $(DOCKERUSER)/mamorx-service:$(VERSION)
