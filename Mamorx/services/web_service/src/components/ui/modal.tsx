@@ -12,22 +12,26 @@ export function ConfirmationModal({ isOpen, onClose, onConfirm }: ModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-      <div className="bg-white rounded-lg p-6 max-w-2xl mx-4 relative">
+    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+      <div className="bg-background rounded-lg p-4 max-w-4xl w-full relative border shadow-md">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+          className="absolute top-2 right-2 text-muted-foreground hover:text-foreground transition-colors"
         >
-          <X className="h-6 w-6" />
+          <X className="h-4 w-4" />
         </button>
 
-        <div className="space-y-6">
-          <h3 className="text-2xl font-semibold">Important Notice</h3>
+        <div className="space-y-4">
+          <h3 className="text-lg font-serif font-medium text-primary">
+            Important Notice
+          </h3>
 
-          <div className="space-y-4 text-gray-700">
-            <div className="bg-yellow-50 p-4 rounded-lg">
-              <h4 className="font-semibold mb-2">Privacy Notice</h4>
-              <p>
+          <div className="space-y-4">
+            <div className="bg-accent/50 p-4 rounded-lg border border-accent">
+              <h4 className="font-serif font-medium mb-2 text-foreground text-sm">
+                Privacy Notice
+              </h4>
+              <p className="text-foreground/90 leading-relaxed text-sm">
                 While we are careful to delete uploaded PDFs after processing,
                 we cannot provide absolute guarantees about data handling.
                 Please ensure you have the right to share any uploaded
@@ -35,19 +39,23 @@ export function ConfirmationModal({ isOpen, onClose, onConfirm }: ModalProps) {
               </p>
             </div>
 
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h4 className="font-semibold mb-2">Watermarking</h4>
-              <p>
+            <div className="bg-accent/50 p-4 rounded-lg border border-accent">
+              <h4 className="font-serif font-medium mb-2 text-foreground text-sm">
+                Watermarking
+              </h4>
+              <p className="text-foreground/90 leading-relaxed text-sm">
                 All generated reviews will contain watermarks to ensure they can
                 be detected if used as actual reviews. These reviews are
                 intended for research and demonstration purposes only.
               </p>
             </div>
 
-            <div className="bg-green-50 p-4 rounded-lg">
-              <h4 className="font-semibold mb-2">Citation</h4>
-              <p>If you use MAMORX in your research, please cite our work:</p>
-              <div className="bg-gray-100 p-3 rounded mt-2 font-mono text-sm">
+            <div className="bg-secondary p-4 rounded-lg border border-border">
+              <h4 className="font-serif font-medium mb-2 text-sm">Citation</h4>
+              <p className="text-secondary-foreground text-sm">
+                If you use MAMORX in your research, please cite our work:
+              </p>
+              <div className="bg-muted/70 p-3 rounded-md mt-2 font-mono text-xs">
                 @article{"{"}mamorx2024,
                 <br />
                 &nbsp;&nbsp;title={"{"}MAMORX: Multi-agent Multi-Modal
@@ -60,17 +68,17 @@ export function ConfirmationModal({ isOpen, onClose, onConfirm }: ModalProps) {
               <a
                 href="/citation.bib"
                 download
-                className="inline-flex items-center mt-2 text-blue-600 hover:text-blue-800"
+                className="inline-flex items-center mt-2 text-primary hover:text-primary/90 transition-colors text-sm"
               >
                 Download BibTeX
               </a>
             </div>
           </div>
 
-          <div className="flex justify-end gap-4 mt-6">
+          <div className="flex justify-end gap-3 mt-4">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800"
+              className="px-4 py-2 text-muted-foreground hover:text-foreground transition-colors font-serif text-sm"
             >
               Cancel
             </button>
@@ -79,7 +87,7 @@ export function ConfirmationModal({ isOpen, onClose, onConfirm }: ModalProps) {
                 onConfirm();
                 onClose();
               }}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors font-serif text-sm"
             >
               I Understand and Agree
             </button>
