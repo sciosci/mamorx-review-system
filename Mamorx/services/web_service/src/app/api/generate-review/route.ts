@@ -1,8 +1,5 @@
 import { NextResponse } from 'next/server'
-// import { loadEnvConfig } from '@next/env';
 
-// const projectDir = process.cwd();
-// loadEnvConfig(projectDir);
 export const dynamic = "force-dynamic";
 
 export async function GET() { // request: NextRequest
