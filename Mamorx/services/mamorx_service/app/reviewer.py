@@ -1,7 +1,31 @@
-from app.config import settings
+import requests
+import logging
 
+from time import sleep
+from app.config import settings
 from MAMORX.schemas import APIConfigs
 from MAMORX.reviewer_workflow import ReviewerWorkflow
+
+
+# Test connection to grobid server
+remaining_attempts = 10
+connection_success = False
+while(remaining_attempts > 0 and connection_success == False):
+    response = None
+    try:
+        response = requests.get(f"{settings.grobid_server_url}/api/isalive")
+    except:
+        logging.error(f"Failed to connect to grobid server: remaining attempts {remaining_attempts}")
+    if(response != None and response.status_code == 200):
+        connection_success = True
+    else:
+        sleep(5)
+    remaining_attempts -= 1
+    
+
+if(connection_success == False):
+    logging.error("Failed to connect to grobid server shutting down now")
+    exit(1)
 
 
 reviewer_workflow = ReviewerWorkflow(
