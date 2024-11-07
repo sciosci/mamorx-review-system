@@ -1,3 +1,4 @@
 *.sh
 db/
 Makefile
+Dockerfile
