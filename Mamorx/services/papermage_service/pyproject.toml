@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "papermage-service"
+version = "0.1.0"
+description = ""
+authors = ["Pawin Taechoyotin <pawin.taechoyotin@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.11,<=3.13"
+papermage = {extras = ["dev", "predictors", "visualizers"], version = "^0.20.0"}
+python-poppler = "^0.4.1"
+protobuf = "4.25.5"
+anthropic = "^0.37.1"
+grpcio = "^1.67.1"
+pillow = "^11.0.0"
+ratelimit = "^2.2.1"
+boto3 = "^1.35.51"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

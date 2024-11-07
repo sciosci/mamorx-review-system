@@ -1,0 +1,77 @@
+services:
+  grobid-service:
+    image: grobid/grobid:0.8.0
+    init: true
+    ports:
+      - "8070:8070"
+      - "8071:8071"
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #       - driver: nvidia
+    #         # count: all
+    #         device_ids: ['0']
+    #         capabilities: [gpu]
+  papermage-service:
+    image: papermage-service:latest
+    ports:
+      - "5001:5001"
+    environment:
+      - AWS_ACCESS_KEY_ID=
+      - AWS_SECRET_ACCESS_KEY=
+      - AWS_DEFAULT_REGION=
+      - ANTHROPIC_MODEL_ID=anthropic.claude-3-5-sonnet-20240620-v1:0
+  mamorx-service:
+    image: mamorx-service:latest
+    ports:
+      - "8080:80"
+    environment:
+      - OUTPUT_DIR=output
+      - PROMPT_FILE=config/prompts.json
+      - ANTHROPIC_MODEL_ID=anthropic.claude-3-5-sonnet-20240620-v1:0 
+      - OPENAI_API_KEY=
+      - SEMANTIC_SCHOLAR_API_KEY=
+      - OPENAI_MODEL_NAME=gpt-4o-mini
+      - AWS_ACCESS_KEY_ID=
+      - AWS_SECRET_ACCESS_KEY=
+      - AWS_DEFAULT_REGION=
+      - FIGURE_CRITIC_URL=papermage-service:5001
+      - GROBID_CONFIG_FILE_PATH=config/grobid_config.json
+      - GROBID_SERVER_URL=http://grobid-service:8070
+      - DISABLE_REVIEW=True
+    depends_on:
+      - papermage-service
+      - grobid-service
+  web-service:
+    image: web-service:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - MAMORX_SERVICE_URL=http://mamorx-service:8080
+  # ollama:
+  #   image: ollama/ollama
+  #   ports:
+  #     - "11434:11434"
+  #   command: serve && ollama pull llama3.1:70b && ollama run llama3.1:70b
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #         - driver: nvidia
+  #           # count: all
+  #           device_ids: ['0']
+  #           capabilities: [gpu]
+  #   volumes:
+  #     - ollama:/root/.ollama
+    
+  # semantic-scholar:
+  #   image: ...
+  # llm-service:
+  #   image: ...
+  # reverse-proxy:
+  #   image: nginx
+
+volumes:
+  ollama:
+    external: true
