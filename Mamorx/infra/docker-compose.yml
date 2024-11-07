@@ -1,5 +1,5 @@
 services:
-  grobid:
+  grobid-service:
     image: grobid/grobid:0.8.0
     init: true
     ports:
@@ -25,9 +25,9 @@ services:
   mamorx-service:
     image: mamorx-service:latest
     ports:
-      -"8080:80"
+      - "8080:80"
     environment:
-      - OUTPUT_DIR=
+      - OUTPUT_DIR=output
       - PROMPT_FILE=config/prompts.json
       - ANTHROPIC_MODEL_ID=anthropic.claude-3-5-sonnet-20240620-v1:0 
       - OPENAI_API_KEY=
@@ -38,6 +38,10 @@ services:
       - AWS_DEFAULT_REGION=
       - FIGURE_CRITIC_URL=papermage-service:5001
       - GROBID_CONFIG_FILE_PATH=config/grobid_config.json
+      - GROBID_SERVER_URL=http://grobid-service:8070
+    depends_on:
+      - papermage-service
+      - grobid-service
   # ollama:
   #   image: ollama/ollama
   #   ports:
