@@ -1,9 +1,9 @@
-import { Button } from "@/components/ui/button"
+import PDFReviewerForm from "@/components/forms/pdf_reviewer";
 
 export default function Home() {
   return (
     <div>
-      <Button>Click me</Button>
+      <PDFReviewerForm />
     </div>
   );
 }
