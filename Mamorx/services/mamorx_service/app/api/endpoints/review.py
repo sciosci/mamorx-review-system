@@ -4,6 +4,7 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, UploadFile, Form, File
 
 from app.reviewer import reviewer_workflow
+from app.config import settings
 from MAMORX.schemas import ReviewResult
 
 
@@ -17,6 +18,12 @@ async def review_pdf_paper(
     file_content = pdf_file.file
 
     file_content_bytes = file_content.read()
+
+    if(settings.disable_review):
+        return ReviewResult(
+            review_content=f"PDF file size : {len(file_content_bytes)}",
+            time_elapsed=0
+        )
 
     review_result = ReviewResult()
 
