@@ -47,8 +47,9 @@ export default async function AboutPage() {
                   <p className="text-foreground/90 mb-4">
                     We are actively recruiting talented researchers and
                     engineers interested in AI, multi-agent systems, and
-                    scientific discovery. If you're passionate about advancing
-                    scientific research through AI, we'd love to hear from you.
+                    scientific discovery. If you&apos;re passionate about
+                    advancing scientific research through AI, we&apos;d love to
+                    hear from you.
                   </p>
                   <p className="text-foreground/90">
                     Visit our lab website to learn more about open positions and

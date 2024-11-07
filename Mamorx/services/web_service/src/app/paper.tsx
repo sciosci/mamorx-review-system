@@ -28,7 +28,7 @@ export default function Paper() {
             <p className="text-gray-700">
               This paper presents MAMORX, a system that integrates multi-agent
               and multi-modal analysis with external knowledge sources for
-              scientific review generation. We demonstrate the system's
+              scientific review generation. We demonstrate the system&apos;s
               effectiveness through comprehensive evaluations and user studies.
             </p>
 
