@@ -1,9 +1,9 @@
 "use client"
+import axios from "axios"
 import React from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -56,18 +56,27 @@ export default function PDFReviewerForm() {
     }
   }
 
-  function onSubmit(data: z.infer<typeof FormSchema>) {
-    console.log(JSON.stringify(data));
-    console.log(pdfData);
-    console.log(inputFile);
-    // toast({
-    //   title: "You submitted the following values:",
-    //   description: (
-    //     <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-    //       <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-    //     </pre>
-    //   ),
-    // })
+  async function submitFormToServer(review_type: string) {
+    const headers = {
+      "Content-Type": "multipart/form-data"
+    }
+    let formData = new FormData();
+    formData.append("pdf_file", inputFile as Blob);
+    formData.append("review_type", review_type);
+
+    const res = await axios.post("/api/generate-review", formData, {
+      headers: headers
+    })
+    return res.data;
+  }
+
+  async function onSubmit(data: z.infer<typeof FormSchema>) {
+    // console.log(JSON.stringify(data));
+    // console.log(pdfData);
+    // console.log(inputFile);
+
+    const result = await submitFormToServer(data.review_type);
+    console.log(result);
   }
 
 
@@ -103,7 +112,7 @@ export default function PDFReviewerForm() {
           />
           <div className="grid w-full max-w-sm items-center gap-1.5">
             <Label htmlFor="file">PDF file</Label>
-            <Input id="pdf_file" type="file" accept=".pdf" onChange={handlePDFChange}/>
+            <Input id="pdf_file" type="file" accept=".pdf" onChange={handlePDFChange} />
           </div>
           <Button type="submit">Submit</Button>
         </form>
