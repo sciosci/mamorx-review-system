@@ -43,6 +43,12 @@ services:
     depends_on:
       - papermage-service
       - grobid-service
+  web-service:
+    image: web-service:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - MAMORX_SERVICE_URL=http://mamorx-service:8080
   # ollama:
   #   image: ollama/ollama
   #   ports:
@@ -65,8 +71,6 @@ services:
   #   image: ...
   # reverse-proxy:
   #   image: nginx
-  # frontend:
-  #   image: ...
 
 volumes:
   ollama:
