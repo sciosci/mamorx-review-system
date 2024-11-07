@@ -14,5 +14,6 @@ class Settings(BaseSettings):
     aws_default_region: str
     figure_critic_url: str
     grobid_config_file_path: str
+    grobid_server_url: str
 
 settings = Settings()
