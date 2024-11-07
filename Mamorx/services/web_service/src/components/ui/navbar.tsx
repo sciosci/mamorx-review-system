@@ -14,12 +14,14 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className="bg-gray-800 text-white p-4">
+    <nav className="bg-primary text-primary-foreground p-4">
       <div className="container mx-auto flex justify-between items-center">
         <Link
           href="/"
           className={`text-lg font-bold transition-colors ${
-            pathname === "/" ? "text-blue-400" : "hover:text-blue-300"
+            pathname === "/"
+              ? "text-white underline decoration-2 underline-offset-4"
+              : "text-primary-foreground/80 hover:text-primary-foreground"
           }`}
         >
           MAMORX
@@ -31,8 +33,8 @@ export default function Navbar() {
               href={link.href}
               className={`transition-colors ${
                 pathname === link.href
-                  ? "text-blue-400 font-medium"
-                  : "hover:text-blue-300"
+                  ? "text-white font-medium underline decoration-2 underline-offset-4"
+                  : "text-primary-foreground/80 hover:text-primary-foreground"
               }`}
             >
               {link.label}

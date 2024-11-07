@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Navbar from "@/components/ui/navbar";
 import Footer from "@/components/ui/footer";
+import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: "About MAMORX",
@@ -31,45 +32,40 @@ export default async function AboutPage() {
                   </p>
                 </div>
 
-                <div className="bg-blue-50 p-6 rounded-lg">
+                <div className="bg-secondary p-6 rounded-lg">
                   <h2 className="text-xl font-semibold mb-4">Research Lab</h2>
-                  <p className="text-gray-700">
+                  <p className="text-secondary-foreground">
                     MAMORX is developed at the Science of Science and
                     Computational Discovery Laboratory at the University of
                     Colorado Boulder. Our lab focuses on using computational
                     methods to understand and improve the scientific process.
                   </p>
-                  <div className="mt-4">
+                </div>
+
+                <div className="bg-primary/5 p-6 rounded-lg border border-primary/10">
+                  <h2 className="text-xl font-semibold mb-4">Join Our Team</h2>
+                  <p className="text-foreground/90 mb-4">
+                    We are actively recruiting talented researchers and
+                    engineers interested in AI, multi-agent systems, and
+                    scientific discovery. If you're passionate about advancing
+                    scientific research through AI, we'd love to hear from you.
+                  </p>
+                  <p className="text-foreground/90">
+                    Visit our lab website to learn more about open positions and
+                    how to apply.
+                  </p>
+                </div>
+
+                <div className="flex justify-center gap-4">
+                  <Button asChild size="lg">
                     <a
                       href="https://scienceofscience.org"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-800 underline"
                     >
                       Visit Lab Website
                     </a>
-                  </div>
-                </div>
-
-                <div className="bg-gray-50 p-6 rounded-lg">
-                  <h2 className="text-xl font-semibold mb-4">Key Features</h2>
-                  <ul className="space-y-2 text-gray-700">
-                    <li>• Multi-modal analysis of scientific papers</li>
-                    <li>• Integration with external knowledge sources</li>
-                    <li>• Advanced multi-agent system architecture</li>
-                    <li>• Structured output generation</li>
-                  </ul>
-                </div>
-
-                <div className="flex justify-center gap-4">
-                  <a
-                    href="https://anonymous.4open.science/r/MAMORX-BD44"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
-                  >
-                    Project Page
-                  </a>
+                  </Button>
                 </div>
               </div>
             </div>

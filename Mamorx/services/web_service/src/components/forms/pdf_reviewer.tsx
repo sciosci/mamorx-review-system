@@ -32,6 +32,12 @@ const FormSchema = z.object({
   }),
 });
 
+interface RateLimitState {
+  remainingUserSubmissions: number;
+  remainingTotalSubmissions: number;
+  nextResetTime: string | null;
+}
+
 export default function PDFReviewerForm() {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -43,6 +49,34 @@ export default function PDFReviewerForm() {
   const [pendingSubmission, setPendingSubmission] = useState<z.infer<
     typeof FormSchema
   > | null>(null);
+  const [rateLimitInfo, setRateLimitInfo] = useState<RateLimitState>({
+    remainingUserSubmissions: 3,
+    remainingTotalSubmissions: 500,
+    nextResetTime: null,
+  });
+
+  async function fetchRateLimitInfo() {
+    try {
+      const res = await axios.get("/api/generate-review");
+      if (res.headers["x-ratelimit-remaining-user"]) {
+        setRateLimitInfo({
+          remainingUserSubmissions: parseInt(
+            res.headers["x-ratelimit-remaining-user"]
+          ),
+          remainingTotalSubmissions: parseInt(
+            res.headers["x-ratelimit-remaining-total"]
+          ),
+          nextResetTime: res.headers["x-ratelimit-reset"],
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching rate limit info:", error);
+    }
+  }
+
+  React.useEffect(() => {
+    fetchRateLimitInfo();
+  }, []);
 
   function handlePDFChange(e: React.ChangeEvent<HTMLInputElement>) {
     if (e.target?.files?.[0]) {
@@ -65,10 +99,28 @@ export default function PDFReviewerForm() {
         headers: headers,
       });
 
+      if (res.headers["x-ratelimit-remaining-user"]) {
+        setRateLimitInfo({
+          remainingUserSubmissions: parseInt(
+            res.headers["x-ratelimit-remaining-user"]
+          ),
+          remainingTotalSubmissions: parseInt(
+            res.headers["x-ratelimit-remaining-total"]
+          ),
+          nextResetTime: res.headers["x-ratelimit-reset"],
+        });
+      }
+
       setResponseMessage(res.data.review_content);
     } catch (error) {
-      console.error("Error submitting form:", error);
-      setResponseMessage("Error submitting form.");
+      if (axios.isAxiosError(error) && error.response?.status === 429) {
+        setResponseMessage(
+          error.response.data.message ||
+            "You've reached the maximum number of submissions for today. Please try again tomorrow."
+        );
+      } else {
+        setResponseMessage("Error submitting form.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -87,12 +139,11 @@ export default function PDFReviewerForm() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-8">
+    <div className="max-w-2xl mx-auto">
       <div className="mb-8">
-        <h2 className="text-2xl font-semibold mb-2">PDF Review Generator</h2>
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           Upload your scientific paper and select a review type to generate an
-          AI-powered review.
+          AI-powered comprehensive review.
         </p>
       </div>
 
@@ -134,7 +185,7 @@ export default function PDFReviewerForm() {
 
           <div className="space-y-4">
             <Label htmlFor="file" className="text-lg">
-              Upload PDF
+              Upload Paper
             </Label>
             <Input
               id="pdf_file"
@@ -145,12 +196,24 @@ export default function PDFReviewerForm() {
             />
           </div>
 
+          <div className="text-sm text-muted-foreground mb-2">
+            {rateLimitInfo.remainingUserSubmissions > 0
+              ? `${rateLimitInfo.remainingUserSubmissions} submissions remaining today`
+              : `Daily limit reached. Next reset: ${new Date(
+                  rateLimitInfo.nextResetTime!
+                ).toLocaleString()}`}
+          </div>
+
           <Button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || rateLimitInfo.remainingUserSubmissions === 0}
             className="w-full py-6 text-lg"
           >
-            {isLoading ? "Generating Review..." : "Generate Review"}
+            {isLoading
+              ? "Generating Review..."
+              : rateLimitInfo.remainingUserSubmissions === 0
+              ? "Daily Limit Reached"
+              : "Generate Review"}
           </Button>
         </form>
       </Form>
@@ -162,7 +225,7 @@ export default function PDFReviewerForm() {
       />
 
       {responseMessage && (
-        <div className="mt-8 p-6 bg-gray-50 rounded-lg">
+        <div className="mt-8 p-6 bg-secondary rounded-lg">
           <h3 className="text-xl font-semibold mb-4">Generated Review</h3>
           <div className="prose max-w-none">{responseMessage}</div>
         </div>
