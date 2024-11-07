@@ -12,10 +12,10 @@ from MAMORX.utils.figure_critic import FigureCriticClient
 
 
 class ReviewerWorkflow:
-    def __init__(self, prompt_file_path: str, output_dir: str, api_config: APIConfigs, grobid_config_file_path: str):
+    def __init__(self, prompt_file_path: str, output_dir: str, api_config: APIConfigs, grobid_config_file_path: str, grobid_server_url: str = None):
         self.workflow_prompts = load_workflow_prompt(prompt_file_path)
         self.output_dir = output_dir
-        self.pdf_processor = PDFProcessor(output_dir, grobid_config_file_path=grobid_config_file_path)
+        self.pdf_processor = PDFProcessor(output_dir, grobid_config_file_path=grobid_config_file_path, grobid_server_url=grobid_server_url)
         self.api_config = api_config
         # Create MultiAgentReviewerCrew
         self.multi_agent_reviewer = MultiAgentReviewerCrew(

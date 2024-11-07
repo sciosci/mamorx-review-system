@@ -17,5 +17,6 @@ reviewer_workflow = ReviewerWorkflow(
         aws_default_region=settings.aws_default_region,
         figure_critic_url=settings.figure_critic_url
     ),
-    grobid_config_file_path=settings.grobid_config_file_path
+    grobid_config_file_path=settings.grobid_config_file_path,
+    grobid_server_url=settings.grobid_server_url
 )

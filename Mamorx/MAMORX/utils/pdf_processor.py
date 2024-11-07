@@ -11,7 +11,8 @@ class PDFProcessor:
     def __init__(self,
                  output_dir: str,
                  grobid_config: Optional[GrobidConfig] = None,
-                 grobid_config_file_path: Optional[str] = "config/grobid_config.json"
+                 grobid_config_file_path: Optional[str] = "config/grobid_config.json",
+                 grobid_server_url: Optional[str] = None
                  ):
         # Make output directory
         self.output_dir_base = Path(output_dir)
@@ -24,6 +25,10 @@ class PDFProcessor:
             self.grobid_config: GrobidConfig = grobid_config
         else:
             self.grobid_config: GrobidConfig = load_grobid_config(grobid_config_file_path)
+
+        # Override grobid_server_url if specified
+        if(grobid_server_url != None):
+            self.grobid_config["grobid_server"] = grobid_server_url
 
         # Create grobid client
         self.grobid_client = GrobidClient(**self.grobid_config)
