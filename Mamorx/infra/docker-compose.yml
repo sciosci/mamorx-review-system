@@ -39,6 +39,7 @@ services:
       - FIGURE_CRITIC_URL=papermage-service:5001
       - GROBID_CONFIG_FILE_PATH=config/grobid_config.json
       - GROBID_SERVER_URL=http://grobid-service:8070
+      - DISABLE_REVIEW=True
     depends_on:
       - papermage-service
       - grobid-service

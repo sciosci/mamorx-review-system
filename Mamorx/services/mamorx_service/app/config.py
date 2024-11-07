@@ -15,5 +15,6 @@ class Settings(BaseSettings):
     figure_critic_url: str
     grobid_config_file_path: str
     grobid_server_url: str
+    disable_review: bool = False
 
 settings = Settings()
