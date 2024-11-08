@@ -153,7 +153,7 @@ class ReviewerWorkflow:
                 list_of_reference=list_of_reference,
                 api_config=self.api_config
             )
-            novelty_assessment = novelty_assessment_result['assessment']
+            novelty_assessment = novelty_assessment_result['summary']
             figure_critic_assessment = self.figure_critic.critic_pdf_file(
                 pdf_file_path=pdf_file_path,
                 title=title,

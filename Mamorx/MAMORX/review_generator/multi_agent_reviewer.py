@@ -105,7 +105,8 @@ class MultiAgentReviewerCrew(object):
             backstory=prompts['manager']['system_prompt'],
             cache=True,
             llm=self.llm,
-            debug_mode=True
+            debug_mode=True,
+            allow_delegation=True
             )
 
         #  Tasks
