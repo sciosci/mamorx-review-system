@@ -27,7 +27,13 @@ WORKDIR /app
 
 COPY ./services/papermage_service/pyproject.toml ./services/papermage_service/poetry.lock /app/
 
-RUN poetry install --only=main --no-root 
+# Add trusted certificates and update pip before poetry install
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    && update-ca-certificates \
+    && pip install --upgrade pip
+
+RUN poetry install --only=main --no-root --verbose
 
 COPY ./MAMORX  /app/MAMORX
 
