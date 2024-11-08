@@ -22,10 +22,17 @@ async def review_pdf_paper(
     if(settings.disable_review):
         return ReviewResult(
             review_content=f"PDF file size : {len(file_content_bytes)}",
-            time_elapsed=0
+            time_elapsed=0,
+            novelty_assessment=None,
+            figure_critic_assessment=None
         )
 
-    review_result = ReviewResult()
+    review_result = ReviewResult(
+        review_content="",
+        time_elapsed=0.0,
+        novelty_assessment=None,
+        figure_critic_assessment=None
+    )
 
     try:
         # Save PDF content to temporary file
