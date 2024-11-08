@@ -39,7 +39,7 @@ services:
       - FIGURE_CRITIC_URL=papermage-service:5001
       - GROBID_CONFIG_FILE_PATH=config/grobid_config.json
       - GROBID_SERVER_URL=http://grobid-service:8070
-      - DISABLE_REVIEW=True
+      - DISABLE_REVIEW=False
     depends_on:
       - papermage-service
       - grobid-service
@@ -48,7 +48,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - MAMORX_SERVICE_URL=http://mamorx-service:8080
+      - MAMORX_SERVICE_URL=http://mamorx-service:80
   # ollama:
   #   image: ollama/ollama
   #   ports:
