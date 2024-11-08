@@ -76,7 +76,7 @@ def main():
         aws_default_region=arg_list.aws_default_region,
         figure_critic_url=arg_list.figure_critic_url
     )
-    grobid_config_file_path = arg_list.grobid_config_file_path
+    grobid_config_file_path = arg_list.grobid_config
 
     base_path = Path(base_dir)
     base_path.mkdir(parents=True, exist_ok=True)
@@ -97,14 +97,21 @@ def main():
     for e in pdf_file_paths:
         print(e)
 
-    with ProcessPoolExecutor(max_workers=max_workers) as executor:
-        futures = [executor.submit(process_pdf_paper, base_dir, entry, human_review_path, prompts_file, api_config, grobid_config_file_path, True) for entry in pdf_file_paths]
-        for future in as_completed(futures):
-            try:
-                result = future.result()
-                logging.info(f"Completed review for: {result['title']}")
-            except Exception as e:
-                logging.info(f"An error occured: {str(e)}")
+    for entry in pdf_file_paths:
+        try:
+            result = process_pdf_paper(base_dir, entry, human_review_path, prompts_file, api_config, grobid_config_file_path, True)
+            logging.info(f"Completed review for: {result['title']}")
+        except Exception as e:
+            logging.info(f"An error occured: {str(e)}")
+        
+    # with ProcessPoolExecutor(max_workers=max_workers) as executor:
+    #     futures = [executor.submit(process_pdf_paper, base_dir, entry, human_review_path, prompts_file, api_config, grobid_config_file_path, True) for entry in pdf_file_paths]
+    #     for future in as_completed(futures):
+    #         try:
+    #             result = future.result()
+    #             logging.info(f"Completed review for: {result['title']}")
+    #         except Exception as e:
+    #             logging.info(f"An error occured: {str(e)}")
     
     logging.info("Review Generation Complete")
     
