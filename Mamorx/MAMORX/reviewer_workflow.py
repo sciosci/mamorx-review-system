@@ -116,7 +116,9 @@ class ReviewerWorkflow:
         barebones_time = time() - start_time
         barebones_result = ReviewResult(
             review_content=barebones,
-            time_elapsed=barebones_time
+            time_elapsed=barebones_time,
+            novelty_assessment=None,
+            figure_critic_assessment=None
         )
         return barebones_result
     
@@ -132,7 +134,9 @@ class ReviewerWorkflow:
         liang_etal_time = time() - start_time
         liang_etal_result = ReviewResult(
             review_content=liang_etal,
-            time_elapsed=liang_etal_time
+            time_elapsed=liang_etal_time,
+            novelty_assessment=None,
+            figure_critic_assessment=None
         )
         return liang_etal_result
     
@@ -169,7 +173,9 @@ class ReviewerWorkflow:
         multi_agent_review_time = time() - start_time
         multi_agent_review_result = ReviewResult(
             review_content=multi_agent_review['review'],
-            time_elapsed=multi_agent_review_time
+            time_elapsed=multi_agent_review_time,
+            novelty_assessment=novelty_assessment,
+            figure_critic_assessment=figure_critic_assessment
         )
         return multi_agent_review_result
 

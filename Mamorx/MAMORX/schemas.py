@@ -13,6 +13,8 @@ class PDFReviewResult(TypedDict):
 class ReviewResult(TypedDict):
     review_content: str
     time_elapsed: float
+    novelty_assessment: Optional[str]
+    figure_critic_assessment: Optional[str]
 
 
 class PaperReviewResult(TypedDict):
