@@ -180,7 +180,7 @@ class ReviewerWorkflow:
         return multi_agent_review_result
 
 
-    def run_workflow(self, pdf_file_path: str) -> PaperReviewResult:
+    def run_workflow(self, pdf_file_path: str, review_types: List[Literal["barebones", "liangetal", "multiagent", "mamorx"]]) -> PaperReviewResult:
         # Parse PDF
         paper = self.pdf_processor.process_pdf_file(pdf_file_path)
 
@@ -188,10 +188,26 @@ class ReviewerWorkflow:
         organized_text, paper_id, title, abstract, list_of_reference = self.extract_organized_text(paper)
         
         # Generate barebones review
-        barebones_result = self.generate_barebones_review_result(paper=organized_text)
+        if("barebones" in review_types):
+            barebones_result = self.generate_barebones_review_result(paper=organized_text)
+        else:
+            barebones_result = ReviewResult(
+                review_content="",
+                time_elapsed=0,
+                novelty_assessment="",
+                figure_critic_assessment=""
+            )
 
         # Generate liange etal review
-        liang_etal_result = self.generate_liang_etal_review_result(title=title, paper=organized_text)
+        if("liang_etal_result" in review_types):
+            liang_etal_result = self.generate_liang_etal_review_result(title=title, paper=organized_text)
+        else:
+            liang_etal_result = ReviewResult(
+                review_content="",
+                time_elapsed=0,
+                novelty_assessment="",
+                figure_critic_assessment=""
+            )
 
         # Save organized text as txt file for MultiAgentReviewerCrew
         temp_dir_path = Path(f"{self.output_dir}/tmp/{paper_id}")
@@ -202,25 +218,41 @@ class ReviewerWorkflow:
         
 
         # Generate multi agent review without knowledge
-        multi_agent_review_txt_path = temp_dir_path / "multi_agent_review.txt"
-        multi_agent_review_result = self.generate_review_with_multi_agent_result(
-            parsed_text_file_path=parsed_text_file_path,
-            pdf_file_path=pdf_file_path,
-            use_knowledge=False,
-            output_path=str(multi_agent_review_txt_path)
-        )
+        if("multiagent" in review_types):
+            multi_agent_review_txt_path = temp_dir_path / "multi_agent_review.txt"
+            multi_agent_review_result = self.generate_review_with_multi_agent_result(
+                parsed_text_file_path=parsed_text_file_path,
+                pdf_file_path=pdf_file_path,
+                use_knowledge=False,
+                output_path=str(multi_agent_review_txt_path)
+            )
+        else:
+            multi_agent_review_result = ReviewResult(
+                review_content="",
+                time_elapsed=0,
+                novelty_assessment="",
+                figure_critic_assessment=""
+            )
         
         # Generate multi agent review with knowledge
-        multi_agent_with_knowledge_review_txt_path = temp_dir_path / "multi_agent_with_knowledge_review.txt"
-        multi_agent_review_with_knowledge_result = self.generate_review_with_multi_agent_result(
-            parsed_text_file_path=parsed_text_file_path,
-            pdf_file_path=pdf_file_path,
-            use_knowledge=True,
-            output_path=str(multi_agent_with_knowledge_review_txt_path),
-            title=title,
-            abstract=abstract,
-            list_of_reference=list_of_reference
-        )
+        if("mamorx" in review_types):
+            multi_agent_with_knowledge_review_txt_path = temp_dir_path / "multi_agent_with_knowledge_review.txt"
+            multi_agent_review_with_knowledge_result = self.generate_review_with_multi_agent_result(
+                parsed_text_file_path=parsed_text_file_path,
+                pdf_file_path=pdf_file_path,
+                use_knowledge=True,
+                output_path=str(multi_agent_with_knowledge_review_txt_path),
+                title=title,
+                abstract=abstract,
+                list_of_reference=list_of_reference
+            )
+        else:
+            multi_agent_review_with_knowledge_result = ReviewResult(
+                review_content="",
+                time_elapsed=0,
+                novelty_assessment="",
+                figure_critic_assessment=""
+            )
         
         # Create paper object
         paper_review_result = PaperReviewResult(

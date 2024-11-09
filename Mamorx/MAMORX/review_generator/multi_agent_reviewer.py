@@ -7,6 +7,8 @@ from crewai_tools import TXTSearchTool
 from MAMORX.schemas import APIConfigs, MultiAgentPrompt, MultiAgentCrewReviewResult
 from MAMORX.custom_crewai.task import CustomTask
 from MAMORX.custom_crewai_tools import FileReadToolUTF8, TextContainerTool
+from MAMORX.custom_crewai_tools.figure_tool import FigureTool
+from MAMORX.custom_crewai_tools.novelty_tool import NoveltyTool
 from MAMORX.utils import load_chatbedrock_llm_model
 
 
@@ -53,8 +55,8 @@ class MultiAgentReviewerCrew(object):
         # Setup OPENAI_API_KEY as environment variable for TXTSearchTool
         os.environ["OPENAI_API_KEY"] = self.api_config["openai_api_key"]
         paper_search_tool: TXTSearchTool = TXTSearchTool(txt=str(paper_txt_path))
-        novelty_tool: Optional[TextContainerTool] = TextContainerTool(content=novelty_assessment)
-        figure_critic_tool: Optional[TextContainerTool] = TextContainerTool(content=figure_critic_assessment)
+        novelty_tool: Optional[NoveltyTool] = NoveltyTool(content=novelty_assessment)
+        figure_critic_tool: Optional[FigureTool] = FigureTool(content=figure_critic_assessment)
 
         common_agent_tools = [paper_read_tool, paper_search_tool]
 
