@@ -5,13 +5,20 @@ import logging
 import argparse
 import json
 from pathlib import Path
+from typing import List, Literal
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 from MAMORX.schemas import PaperReviewResult, APIConfigs
 from MAMORX.reviewer_workflow import ReviewerWorkflow
 
 
-def process_pdf_paper(base_dir, pdf_file_path: Path, human_review_path: str, prompts_file_path: str, api_config: APIConfigs, grobid_config_file_path: str, save_to_file: bool=False) -> PaperReviewResult:
+def process_pdf_paper(
+        base_dir, pdf_file_path: Path, 
+        human_review_path: str, prompts_file_path: str, 
+        api_config: APIConfigs, grobid_config_file_path: str, 
+        review_types: List[Literal["barebones", "liangetal", "multiagent", "mamorx"]],
+        save_to_file: bool=False
+) -> PaperReviewResult:
     
     # Create output directory for pdf file
     path_segment = "/".join(str(pdf_file_path).split("/")[-2:])[:-4]
@@ -27,8 +34,8 @@ def process_pdf_paper(base_dir, pdf_file_path: Path, human_review_path: str, pro
     )
 
     # Run review workflow
-    review_result = reviewer_workflow.run_workflow(str(pdf_file_path))
-    
+    review_result = reviewer_workflow.run_workflow(str(pdf_file_path), review_types=review_types)
+
     # Save results to file
     if(save_to_file):
         output_file_path = "{}/{}.json".format(base_pdf_dir, review_result["paper_id"])
@@ -57,8 +64,11 @@ def main():
     parser.add_argument("--aws-default-region", help="AWS default region", required=True)
     parser.add_argument("--figure-critic-url", help="URL of figure critic service", default="localhost:5001")
     parser.add_argument("--grobid-config", help="Path to grobid_config.json", default="config/grobid_config.json")
+    parser.add_argument("--barebones", help="Generate barebones review", action="store_true")
+    parser.add_argument("--liangetal", help="Generate liangetal review", action="store_true")
+    parser.add_argument("--multiagent", help="Generate multiagent review", action="store_true")
+    parser.add_argument("--mamorx", help="Generate mamorx review", action="store_true")
     
-
     arg_list= parser.parse_args()
     
     base_dir = arg_list.output_dir   # Project dir
@@ -77,6 +87,15 @@ def main():
         figure_critic_url=arg_list.figure_critic_url
     )
     grobid_config_file_path = arg_list.grobid_config
+    review_types = list()
+    if(arg_list.barebones):
+        review_types.append("barebones")
+    if(arg_list.liangetal):
+        review_types.append("liangetal")
+    if(arg_list.multiagent):
+        review_types.append("multiagent")
+    if(arg_list.mamorx):
+        review_types.append("mamorx")
 
     base_path = Path(base_dir)
     base_path.mkdir(parents=True, exist_ok=True)
@@ -92,14 +111,18 @@ def main():
 
     # List pdf file paths
     pdf_dir = Path(pdf_dir_path)
-    pdf_file_paths = [entry for entry in pdf_dir.glob("*/*.pdf")][:1]
+    pdf_file_paths = [entry for entry in pdf_dir.glob("*/*.pdf")]
 
     for e in pdf_file_paths:
         print(e)
 
     for entry in pdf_file_paths:
         try:
-            result = process_pdf_paper(base_dir, entry, human_review_path, prompts_file, api_config, grobid_config_file_path, True)
+            result = process_pdf_paper(
+                base_dir, entry, human_review_path, 
+                prompts_file, api_config, grobid_config_file_path, 
+                review_types, True
+            )
             logging.info(f"Completed review for: {result['title']}")
         except Exception as e:
             logging.info(f"An error occured: {str(e)}")

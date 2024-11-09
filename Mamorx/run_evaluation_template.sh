@@ -5,13 +5,13 @@ PROMPT_FILE=config/prompts.json
 ANTHROPIC_MODEL_ID=anthropic.claude-3-5-sonnet-20240620-v1:0 
 WORKERS=8
 HUMAN_REVIEW=
-OPENAI_API_KEY=
+OPENAI_API_KEY=gpt-4o-mini
 SEMANTIC_SCHOLAR_API_KEY=
 OPENAI_MODEL_NAME=
 AWS_ACCESS_KEY_ID=
 AWS_SECRET_ACCESS_KEY=
 AWS_DEFAULT_REGION=
-FIGURE_CRITIC_URL=
+FIGURE_CRITIC_URL=localhost:5001
 
 # Initialize conda
 source ~/miniconda3/etc/profile.d/conda.sh
@@ -32,7 +32,11 @@ python evaluation/main.py \
     --aws-access-key-id $AWS_ACCESS_KEY_ID \
     --aws-secret-access-key $AWS_SECRET_ACCESS_KEY \
     --aws-default-region $AWS_DEFAULT_REGION \
-    --figure-critic-url $FIGURE_CRITIC_URL
+    --figure-critic-url $FIGURE_CRITIC_URL \
+    --barebones \
+    --liangetal \
+    --multiagent \
+    --mamorx \
     # --human-review $HUMAN_REVIEW  
 
 # Deactivate virtual environment
