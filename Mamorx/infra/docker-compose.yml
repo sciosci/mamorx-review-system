@@ -2,21 +2,21 @@ services:
   grobid-service:
     image: grobid/grobid:0.8.0
     init: true
-    ports:
-      - "8070:8070"
-      - "8071:8071"
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #       - driver: nvidia
-    #         # count: all
-    #         device_ids: ['0']
-    #         capabilities: [gpu]
+    # ports:
+    #   - "8070:8070"
+    #   - "8071:8071"
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            # count: all
+            device_ids: ['0']
+            capabilities: [gpu]
   papermage-service:
     image: papermage-service:latest
-    ports:
-      - "5001:5001"
+    # ports:
+    #   - "5001:5001"
     environment:
       - AWS_ACCESS_KEY_ID=
       - AWS_SECRET_ACCESS_KEY=
@@ -24,8 +24,8 @@ services:
       - ANTHROPIC_MODEL_ID=anthropic.claude-3-5-sonnet-20240620-v1:0
   mamorx-service:
     image: mamorx-service:latest
-    ports:
-      - "8080:80"
+    # ports:
+    #   - "8080:80"
     environment:
       - OUTPUT_DIR=output
       - PROMPT_FILE=config/prompts.json
@@ -45,10 +45,17 @@ services:
       - grobid-service
   web-service:
     image: web-service:latest
-    ports:
-      - "3000:3000"
+    # ports:
+    #   - "3000:3000"
     environment:
       - MAMORX_SERVICE_URL=http://mamorx-service:80
+  reverse-proxy:
+    image: nginx:1.27.2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
   # ollama:
   #   image: ollama/ollama
   #   ports:
@@ -69,8 +76,7 @@ services:
   #   image: ...
   # llm-service:
   #   image: ...
-  # reverse-proxy:
-  #   image: nginx
+  
 
 volumes:
   ollama:
