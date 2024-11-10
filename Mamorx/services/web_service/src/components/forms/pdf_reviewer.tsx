@@ -26,6 +26,8 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { ConfirmationModal } from "@/components/ui/modal";
 import { Card } from "@/components/ui/card";
+import { SAMPLE_REVIEWS } from "@/data/sample_reviews";
+import { ReviewResult } from "@/interface";
 
 const FormSchema = z.object({
   review_type: z.string({
@@ -44,7 +46,6 @@ export default function PDFReviewerForm() {
     resolver: zodResolver(FormSchema),
   });
   const [inputFile, setInputFile] = React.useState<File>();
-  const [responseMessage, setResponseMessage] = React.useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showModal, setShowModal] = useState(false);
   const [pendingSubmission, setPendingSubmission] = useState<z.infer<
@@ -56,6 +57,9 @@ export default function PDFReviewerForm() {
     nextResetTime: null,
   });
   const [articleSource, setArticleSource] = React.useState<"Sample" | "Upload">("Sample");
+  const [sampleArticleIndex, setSampleArticleIndex] = React.useState<number>(-1);
+  const [reviewResult, setReviewResult] = React.useState<ReviewResult | undefined>(undefined);
+  const [errorMessage, setErrorMessage] = React.useState<string>("");
 
   async function fetchRateLimitInfo() {
     try {
@@ -86,6 +90,7 @@ export default function PDFReviewerForm() {
       setInputFile(file);
     }
     setArticleSource("Upload");
+    setSampleArticleIndex(-1);
   }
 
   async function submitFormToServer(review_type: string) {
@@ -114,15 +119,20 @@ export default function PDFReviewerForm() {
         });
       }
 
-      setResponseMessage(res.data.review_content);
+      setReviewResult(res.data);
+      setErrorMessage("");
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 429) {
-        setResponseMessage(
+        setReviewResult(
+          undefined
+        );
+        setErrorMessage(
           error.response.data.message ||
           "You've reached the maximum number of submissions for today. Please try again tomorrow."
-        );
+        )
       } else {
-        setResponseMessage("Error submitting form.");
+        setReviewResult(undefined);
+        setErrorMessage("Error submitting form.");
       }
     } finally {
       setIsLoading(false);
@@ -131,13 +141,27 @@ export default function PDFReviewerForm() {
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     if (articleSource == "Upload") {
-      // setPendingSubmission(data);
-      // setShowModal(true);
-      alert("Sending Request to server");
+      setPendingSubmission(data);
+      setShowModal(true);
     }
-    else
-    {
-      alert("Using sample pdfs for review");
+    else {
+      if (data.review_type == "barebones") {
+        setReviewResult(SAMPLE_REVIEWS[sampleArticleIndex].barebones);
+      }
+      else if (data.review_type == "liangetal") {
+        setReviewResult(SAMPLE_REVIEWS[sampleArticleIndex].liangetal);
+      }
+      else if (data.review_type == "multiagent") {
+        setReviewResult(SAMPLE_REVIEWS[sampleArticleIndex].multiagent);
+      }
+      else if (data.review_type == "mamorx") {
+        setReviewResult(SAMPLE_REVIEWS[sampleArticleIndex].mamorx);
+      }
+      else {
+        setReviewResult(undefined);
+        alert("Unknown review type");
+      }
+
     }
   }
 
@@ -146,6 +170,21 @@ export default function PDFReviewerForm() {
       await submitFormToServer(pendingSubmission.review_type);
       setPendingSubmission(null);
     }
+  }
+
+  function handleSelectSampleArticle(index: number) {
+    setArticleSource("Sample");
+    setSampleArticleIndex(index);
+  }
+
+  function renderSampleArticleOptions() {
+    return SAMPLE_REVIEWS.map((article, index) => {
+      return (
+        <Card className={`mt-2 mb-2 cursor-pointer ${sampleArticleIndex == index ? "border-blue-500 border-2" : ""}`} key={article.paper_id} onClick={() => { handleSelectSampleArticle(index) }}>
+          <h4 className="text-3l">{article.title}</h4>
+        </Card>
+      );
+    })
   }
 
   return (
@@ -157,9 +196,10 @@ export default function PDFReviewerForm() {
               Try out the reviews from 3 of
               our sample scientifc papers
             </p>
+            {renderSampleArticleOptions()}
           </Card>
           <div className="col-span-2 content-center text-center">OR</div>
-          <Card className="col-span-5 justify-items-center">
+          <Card className={`col-span-5 justify-items-center ${sampleArticleIndex == -1 ? "border-blue-500 border-2" : ""}`}>
             <p className="text-muted-foreground m-2">
               Upload your scientific paper and select a review type to generate an
               AI-powered comprehensive review.
@@ -178,14 +218,6 @@ export default function PDFReviewerForm() {
             </div>
           </Card>
         </div>
-      </div>
-
-
-      <div className="mb-8">
-        <p className="text-muted-foreground">
-          Upload your scientific paper and select a review type to generate an
-          AI-powered comprehensive review.
-        </p>
       </div>
 
       <Form {...form}>
@@ -224,19 +256,6 @@ export default function PDFReviewerForm() {
             )}
           />
 
-          <div className="space-y-4">
-            <Label htmlFor="file" className="text-lg">
-              Upload Paper
-            </Label>
-            <Input
-              id="pdf_file"
-              type="file"
-              accept=".pdf"
-              onChange={handlePDFChange}
-              className="cursor-pointer"
-            />
-          </div>
-
           <div className="text-sm text-muted-foreground mb-2">
             {rateLimitInfo.remainingUserSubmissions > 0
               ? `${rateLimitInfo.remainingUserSubmissions} submissions remaining today`
@@ -265,10 +284,12 @@ export default function PDFReviewerForm() {
         onConfirm={handleConfirmedSubmit}
       />
 
-      {responseMessage && (
+      {(reviewResult || errorMessage) && (
         <div className="mt-8 p-6 bg-secondary rounded-lg">
           <h3 className="text-xl font-semibold mb-4">Generated Review</h3>
-          <div className="prose max-w-none">{responseMessage}</div>
+          <div className="prose max-w-none whitespace-pre-wrap">{
+            (reviewResult) ? reviewResult.review_content : errorMessage
+          }</div>
         </div>
       )}
     </div>
