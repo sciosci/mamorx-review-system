@@ -25,6 +25,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { ConfirmationModal } from "@/components/ui/modal";
+import { Card } from "@/components/ui/card";
 
 const FormSchema = z.object({
   review_type: z.string({
@@ -54,6 +55,7 @@ export default function PDFReviewerForm() {
     remainingTotalSubmissions: 500,
     nextResetTime: null,
   });
+  const [articleSource, setArticleSource] = React.useState<"Sample" | "Upload">("Sample");
 
   async function fetchRateLimitInfo() {
     try {
@@ -83,6 +85,7 @@ export default function PDFReviewerForm() {
       const file = e.target.files[0];
       setInputFile(file);
     }
+    setArticleSource("Upload");
   }
 
   async function submitFormToServer(review_type: string) {
@@ -116,7 +119,7 @@ export default function PDFReviewerForm() {
       if (axios.isAxiosError(error) && error.response?.status === 429) {
         setResponseMessage(
           error.response.data.message ||
-            "You've reached the maximum number of submissions for today. Please try again tomorrow."
+          "You've reached the maximum number of submissions for today. Please try again tomorrow."
         );
       } else {
         setResponseMessage("Error submitting form.");
@@ -127,8 +130,15 @@ export default function PDFReviewerForm() {
   }
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
-    setPendingSubmission(data);
-    setShowModal(true);
+    if (articleSource == "Upload") {
+      // setPendingSubmission(data);
+      // setShowModal(true);
+      alert("Sending Request to server");
+    }
+    else
+    {
+      alert("Using sample pdfs for review");
+    }
   }
 
   async function handleConfirmedSubmit() {
@@ -139,7 +149,38 @@ export default function PDFReviewerForm() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-4xl mx-auto">
+      <div className="mb-8">
+        <div className="grid grid-cols-12">
+          <Card className="col-span-5 justify-items-center">
+            <p className="text-muted-foreground m-2">
+              Try out the reviews from 3 of
+              our sample scientifc papers
+            </p>
+          </Card>
+          <div className="col-span-2 content-center text-center">OR</div>
+          <Card className="col-span-5 justify-items-center">
+            <p className="text-muted-foreground m-2">
+              Upload your scientific paper and select a review type to generate an
+              AI-powered comprehensive review.
+            </p>
+            <div className="space-y-4 justify-items-center">
+              <Label htmlFor="file" className="text-lg">
+                Upload Paper
+              </Label>
+              <Input
+                id="pdf_file"
+                type="file"
+                accept=".pdf"
+                onChange={handlePDFChange}
+                className="cursor-pointer"
+              />
+            </div>
+          </Card>
+        </div>
+      </div>
+
+
       <div className="mb-8">
         <p className="text-muted-foreground">
           Upload your scientific paper and select a review type to generate an
@@ -200,8 +241,8 @@ export default function PDFReviewerForm() {
             {rateLimitInfo.remainingUserSubmissions > 0
               ? `${rateLimitInfo.remainingUserSubmissions} submissions remaining today`
               : `Daily limit reached. Next reset: ${new Date(
-                  rateLimitInfo.nextResetTime!
-                ).toLocaleString()}`}
+                rateLimitInfo.nextResetTime!
+              ).toLocaleString()}`}
           </div>
 
           <Button
@@ -212,8 +253,8 @@ export default function PDFReviewerForm() {
             {isLoading
               ? "Generating Review..."
               : rateLimitInfo.remainingUserSubmissions === 0
-              ? "Daily Limit Reached"
-              : "Generate Review"}
+                ? "Daily Limit Reached"
+                : "Generate Review"}
           </Button>
         </form>
       </Form>
