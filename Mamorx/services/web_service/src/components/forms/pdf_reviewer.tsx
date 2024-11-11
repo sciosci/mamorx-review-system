@@ -25,6 +25,22 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { ConfirmationModal } from "@/components/ui/modal";
+import { SAMPLE_REVIEWS } from "@/data/sample_reviews";
+import { ReviewResult } from "@/interface";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 
 const FormSchema = z.object({
   review_type: z.string({
@@ -43,7 +59,6 @@ export default function PDFReviewerForm() {
     resolver: zodResolver(FormSchema),
   });
   const [inputFile, setInputFile] = React.useState<File>();
-  const [responseMessage, setResponseMessage] = React.useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showModal, setShowModal] = useState(false);
   const [pendingSubmission, setPendingSubmission] = useState<z.infer<
@@ -54,6 +69,10 @@ export default function PDFReviewerForm() {
     remainingTotalSubmissions: 500,
     nextResetTime: null,
   });
+  const [articleSource, setArticleSource] = React.useState<"Sample" | "Upload">("Sample");
+  const [sampleArticleIndex, setSampleArticleIndex] = React.useState<number>(-1);
+  const [reviewResult, setReviewResult] = React.useState<ReviewResult | undefined>(undefined);
+  const [errorMessage, setErrorMessage] = React.useState<string>("");
 
   async function fetchRateLimitInfo() {
     try {
@@ -83,6 +102,8 @@ export default function PDFReviewerForm() {
       const file = e.target.files[0];
       setInputFile(file);
     }
+    setArticleSource("Upload");
+    setSampleArticleIndex(-1);
   }
 
   async function submitFormToServer(review_type: string) {
@@ -111,15 +132,20 @@ export default function PDFReviewerForm() {
         });
       }
 
-      setResponseMessage(res.data.review_content);
+      setReviewResult(res.data);
+      setErrorMessage("");
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 429) {
-        setResponseMessage(
-          error.response.data.message ||
-            "You've reached the maximum number of submissions for today. Please try again tomorrow."
+        setReviewResult(
+          undefined
         );
+        setErrorMessage(
+          error.response.data.message ||
+          "You've reached the maximum number of submissions for today. Please try again tomorrow."
+        )
       } else {
-        setResponseMessage("Error submitting form.");
+        setReviewResult(undefined);
+        setErrorMessage("Error submitting form.");
       }
     } finally {
       setIsLoading(false);
@@ -127,8 +153,29 @@ export default function PDFReviewerForm() {
   }
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
-    setPendingSubmission(data);
-    setShowModal(true);
+    if (articleSource == "Upload") {
+      setPendingSubmission(data);
+      setShowModal(true);
+    }
+    else {
+      if (data.review_type == "barebones") {
+        setReviewResult(SAMPLE_REVIEWS[sampleArticleIndex].barebones);
+      }
+      else if (data.review_type == "liangetal") {
+        setReviewResult(SAMPLE_REVIEWS[sampleArticleIndex].liangetal);
+      }
+      else if (data.review_type == "multiagent") {
+        setReviewResult(SAMPLE_REVIEWS[sampleArticleIndex].multiagent);
+      }
+      else if (data.review_type == "mamorx") {
+        setReviewResult(SAMPLE_REVIEWS[sampleArticleIndex].mamorx);
+      }
+      else {
+        setReviewResult(undefined);
+        alert("Unknown review type");
+      }
+
+    }
   }
 
   async function handleConfirmedSubmit() {
@@ -138,13 +185,121 @@ export default function PDFReviewerForm() {
     }
   }
 
+  function handleSelectSampleArticle(index: number) {
+    setArticleSource("Sample");
+    setSampleArticleIndex(index);
+  }
+
+  function renderSampleArticleOptions() {
+    return SAMPLE_REVIEWS.map((article, index) => {
+      return (
+        <Card className={`mt-2 mb-2 cursor-pointer ${sampleArticleIndex == index ? "border-blue-500 border-2" : ""}`} key={article.paper_id} onClick={() => { handleSelectSampleArticle(index) }}>
+          <h4 className="text-3l">{article.title}</h4>
+        </Card>
+      );
+    })
+  }
+
+  function renderReviewTabs() {
+    return (
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="novelty">Novelty Assessment</TabsTrigger>
+          <TabsTrigger value="figure">Figure Assessment</TabsTrigger>
+        </TabsList>
+        <TabsContent value="overview">
+          <Card>
+            <CardHeader>
+              <CardTitle>Overview</CardTitle>
+              <CardDescription>
+                An overview regarding all aspects of the selected scientific paper.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div className="prose max-w-none whitespace-pre-wrap space-y-1">
+                {
+                  reviewResult?.review_content
+                }
+              </div>
+            </CardContent>
+            <CardFooter>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+        <TabsContent value="novelty">
+          <Card>
+            <CardHeader>
+              <CardTitle>Novelty Assessment</CardTitle>
+              <CardDescription>
+                An assessment regarding the novelty of the selected scientific paper based on previous work within our database.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div className="prose max-w-none whitespace-pre-wrap space-y-1">
+                {
+                  reviewResult?.novelty_assessment || "No direct assessment of novelty was performed."
+                }
+              </div>
+            </CardContent>
+            <CardFooter>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+        <TabsContent value="figure">
+          <Card>
+            <CardHeader>
+              <CardTitle>Figure Assessment</CardTitle>
+              <CardDescription>
+                An assessment regarding the clarity and consistency of figures in respect to the content of the selected scientific paper.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div className="prose max-w-none whitespace-pre-wrap space-y-1">
+                {
+                  reviewResult?.figure_critic_assessment || "No direct assessment of the figures were performed."
+                }
+              </div>
+            </CardContent>
+            <CardFooter>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    );
+  }
+
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-4xl mx-auto">
       <div className="mb-8">
-        <p className="text-muted-foreground">
-          Upload your scientific paper and select a review type to generate an
-          AI-powered comprehensive review.
-        </p>
+        <div className="grid grid-cols-12">
+          <Card className="col-span-5 justify-items-center">
+            <p className="text-muted-foreground m-2">
+              Try out the reviews from 3 of
+              our sample scientifc papers
+            </p>
+            {renderSampleArticleOptions()}
+          </Card>
+          <div className="col-span-2 content-center text-center">OR</div>
+          <Card className={`col-span-5 justify-items-center ${sampleArticleIndex == -1 ? "border-blue-500 border-2" : ""}`}>
+            <p className="text-muted-foreground m-2">
+              Upload your scientific paper and select a review type to generate an
+              AI-powered comprehensive review.
+            </p>
+            <div className="space-y-4 justify-items-center">
+              <Label htmlFor="file" className="text-lg">
+                Upload Paper
+              </Label>
+              <Input
+                id="pdf_file"
+                type="file"
+                accept=".pdf"
+                onChange={handlePDFChange}
+                className="cursor-pointer"
+              />
+            </div>
+          </Card>
+        </div>
       </div>
 
       <Form {...form}>
@@ -183,25 +338,12 @@ export default function PDFReviewerForm() {
             )}
           />
 
-          <div className="space-y-4">
-            <Label htmlFor="file" className="text-lg">
-              Upload Paper
-            </Label>
-            <Input
-              id="pdf_file"
-              type="file"
-              accept=".pdf"
-              onChange={handlePDFChange}
-              className="cursor-pointer"
-            />
-          </div>
-
           <div className="text-sm text-muted-foreground mb-2">
             {rateLimitInfo.remainingUserSubmissions > 0
               ? `${rateLimitInfo.remainingUserSubmissions} submissions remaining today`
               : `Daily limit reached. Next reset: ${new Date(
-                  rateLimitInfo.nextResetTime!
-                ).toLocaleString()}`}
+                rateLimitInfo.nextResetTime!
+              ).toLocaleString()}`}
           </div>
 
           <Button
@@ -212,8 +354,8 @@ export default function PDFReviewerForm() {
             {isLoading
               ? "Generating Review..."
               : rateLimitInfo.remainingUserSubmissions === 0
-              ? "Daily Limit Reached"
-              : "Generate Review"}
+                ? "Daily Limit Reached"
+                : "Generate Review"}
           </Button>
         </form>
       </Form>
@@ -224,10 +366,12 @@ export default function PDFReviewerForm() {
         onConfirm={handleConfirmedSubmit}
       />
 
-      {responseMessage && (
+      {(reviewResult || errorMessage) && (
         <div className="mt-8 p-6 bg-secondary rounded-lg">
           <h3 className="text-xl font-semibold mb-4">Generated Review</h3>
-          <div className="prose max-w-none">{responseMessage}</div>
+          <div className="prose max-w-none whitespace-pre-wrap">{
+            (reviewResult) ? renderReviewTabs() : errorMessage
+          }</div>
         </div>
       )}
     </div>
