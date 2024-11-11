@@ -1,0 +1,35 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ai-reviewer-arena"
+authors = [
+    {name = "Tong Zeng", email = "tongzeng@vt.edu"}
+]
+dynamic = ["version"]
+readme = "README.md"
+description = "AI Reviewer Arena is a project designed to facilitate the evaluation of AI paper reviewers using the
+Elo grading system"
+classifiers = [
+    "Intended Audience :: Science/Research :: Developers",
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+license = {file = "LICENSE"}
+requires-python = ">=3.10"
+dependencies = [
+    "gradio",
+    "gradio-pdf",
+]
+[project.urls]
+Homepage = "https://github.com/tong-zeng/AIReviewerArena"
+Repository = "https://github.com/tong-zeng/AIReviewerArena"
+Changelog = "https://github.com/tong-zeng/AIReviewerArena/blob/main/CHANGELOG.md"
+Documentation = "https://github.com/tong-zeng/AIReviewerArena/blob/main/README.md"
+
+[project.optional-dependencies]
+dev = [
+    "hatch",
+]
