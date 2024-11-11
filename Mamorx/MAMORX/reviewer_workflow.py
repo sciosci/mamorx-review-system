@@ -199,7 +199,7 @@ class ReviewerWorkflow:
             )
 
         # Generate liange etal review
-        if("liang_etal_result" in review_types):
+        if("liangetal" in review_types):
             liang_etal_result = self.generate_liang_etal_review_result(title=title, paper=organized_text)
         else:
             liang_etal_result = ReviewResult(
