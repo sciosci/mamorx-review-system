@@ -1,7 +1,7 @@
 import PDFReviewerForm from "@/components/forms/pdf_reviewer";
 import Navbar from "@/components/ui/navbar";
 import Footer from "@/components/ui/footer";
-import { FileText } from "lucide-react";
+import { FileText, Github } from "lucide-react";
 
 export default function Home() {
   return (
@@ -22,7 +22,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="flex justify-center">
+          <div className="flex justify-center gap-4">
             <a
               href="https://openreview.net/pdf?id=frvkE8rCfX"
               target="_blank"
@@ -31,6 +31,39 @@ export default function Home() {
             >
               <FileText className="h-5 w-5" />
               Read the Paper
+            </a>
+            <a
+              href="https://github.com/mamorx/mamorx"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium text-lg"
+            >
+              <Github className="h-5 w-5" />
+              Code
+            </a>
+            <a
+              href="https://forms.gle/198xkRZgkz6yCcqj8"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium text-lg"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-5 w-5"
+              >
+                <path d="M16 16v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h3" />
+                <path d="M15 5h4v4" />
+                <path d="m16 9-7 7" />
+              </svg>
+              Signup for Updates
             </a>
           </div>
 
