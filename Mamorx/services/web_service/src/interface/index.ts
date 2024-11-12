@@ -7,6 +7,7 @@ export interface ReviewResult {
 
 export interface PaperReviews {
     paper_id: string,
+    authors: string,
     title: string,
     pdf_url: string,
     barebones: ReviewResult,
