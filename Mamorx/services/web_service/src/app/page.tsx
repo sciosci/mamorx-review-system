@@ -33,7 +33,7 @@ export default function Home() {
               Read the Paper
             </a>
             <a
-              href="https://github.com/mamorx/mamorx"
+              href="https://github.com/sciosci/mamorx-review-system"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-8 py-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium text-lg"
