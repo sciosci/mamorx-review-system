@@ -35,21 +35,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselNext,
-  CarouselPrevious
+  CarouselPrevious,
 } from "@/components/ui/carousel";
-import { ScrollText, Users, MessageCircle, ArrowUpRight } from 'lucide-react';
-
+import { ScrollText, Users, MessageCircle, ArrowUpRight } from "lucide-react";
 
 const FormSchema = z.object({
   review_type: z.string({
@@ -78,9 +72,13 @@ export default function PDFReviewerForm() {
     remainingTotalSubmissions: 500,
     nextResetTime: null,
   });
-  const [articleSource, setArticleSource] = React.useState<"Sample" | "Upload">("Sample");
+  const [articleSource, setArticleSource] = React.useState<"Sample" | "Upload">(
+    "Sample"
+  );
   const [sampleArticleIndex, setSampleArticleIndex] = React.useState<number>(0);
-  const [reviewResult, setReviewResult] = React.useState<ReviewResult | undefined>(undefined);
+  const [reviewResult, setReviewResult] = React.useState<
+    ReviewResult | undefined
+  >(undefined);
   const [errorMessage, setErrorMessage] = React.useState<string>("");
 
   async function fetchRateLimitInfo() {
@@ -145,13 +143,11 @@ export default function PDFReviewerForm() {
       setErrorMessage("");
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 429) {
-        setReviewResult(
-          undefined
-        );
+        setReviewResult(undefined);
         setErrorMessage(
           error.response.data.message ||
-          "You've reached the maximum number of submissions for today. Please try again tomorrow."
-        )
+            "You've reached the maximum number of submissions for today. Please try again tomorrow."
+        );
       } else {
         setReviewResult(undefined);
         setErrorMessage("Error submitting form.");
@@ -165,25 +161,19 @@ export default function PDFReviewerForm() {
     if (articleSource == "Upload") {
       setPendingSubmission(data);
       setShowModal(true);
-    }
-    else {
+    } else {
       if (data.review_type == "barebones") {
         setReviewResult(SAMPLE_REVIEWS[sampleArticleIndex].barebones);
-      }
-      else if (data.review_type == "liangetal") {
+      } else if (data.review_type == "liangetal") {
         setReviewResult(SAMPLE_REVIEWS[sampleArticleIndex].liangetal);
-      }
-      else if (data.review_type == "multiagent") {
+      } else if (data.review_type == "multiagent") {
         setReviewResult(SAMPLE_REVIEWS[sampleArticleIndex].multiagent);
-      }
-      else if (data.review_type == "mamorx") {
+      } else if (data.review_type == "mamorx") {
         setReviewResult(SAMPLE_REVIEWS[sampleArticleIndex].mamorx);
-      }
-      else {
+      } else {
         setReviewResult(undefined);
         alert("Unknown review type");
       }
-
     }
   }
 
@@ -203,41 +193,52 @@ export default function PDFReviewerForm() {
     return (
       <Carousel className="w-full max-w-xl " orientation="vertical">
         <CarouselContent className="content-center">
-          {
-            SAMPLE_REVIEWS.map((article, index) => {
-              return (
-                <CarouselItem key={article.paper_id} className="content-center md:basis-1/2 lg:basis-1/3">
-                  <Card className={`mt-2 mb-2 min-h-[6rem] content-center justify-items-center cursor-pointer ${sampleArticleIndex == index ? "border-blue-500 border-2" : ""}`} onClick={() => { handleSelectSampleArticle(index) }}>
-                    <CardHeader className="space-y-4">
-                      <div className="flex items-start justify-between gap-4">
-                        <CardTitle className="text-xl font-bold leading-tight">
-                          {article.title}
-                        </CardTitle>
-                        <ArrowUpRight className="w-5 h-5 flex-shrink-0 text-gray-400" />
-                      </div>
+          {SAMPLE_REVIEWS.map((article, index) => {
+            return (
+              <CarouselItem
+                key={article.paper_id}
+                className="content-center md:basis-1/2 lg:basis-1/3"
+              >
+                <Card
+                  className={`mt-2 mb-2 content-center justify-items-center cursor-pointer ${
+                    sampleArticleIndex == index
+                      ? "border-blue-500 border-2"
+                      : ""
+                  }`}
+                  onClick={() => {
+                    handleSelectSampleArticle(index);
+                  }}
+                >
+                  <CardHeader className="space-y-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <CardTitle className="text-xl font-bold leading-tight">
+                        {article.title}
+                      </CardTitle>
+                      <ArrowUpRight className="w-5 h-5 flex-shrink-0 text-gray-400" />
+                    </div>
 
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Users className="w-4 h-4" />
-                        <span>{article.authors}</span>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      {/* <h4 className="text-3l m-2 text-center">{article.title}</h4>
-                      <p className="text-3m m-2 text-center">{article.title}</p> */}
-                    </CardContent>
-                    <CardFooter className="break-all">
-                      <div className="text-sm text-gray-600">
-                        <span className="font-medium">DOI: </span>
-                        <span className="text-blue-600 hover:underline">
-                          <a href={article.pdf_url} className="text-wrap underline underline-offset-1">{article.pdf_url}</a>
-                        </span>
-                      </div>
-                    </CardFooter>
-                  </Card>
-                </CarouselItem>
-              );
-            })
-          }
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Users className="w-4 h-4" />
+                      <span>{article.authors}</span>
+                    </div>
+                  </CardHeader>
+                  <CardFooter className="break-all">
+                    <div className="text-sm text-gray-600">
+                      <span className="font-medium">DOI: </span>
+                      <span className="text-blue-600 hover:underline">
+                        <a
+                          href={article.pdf_url}
+                          className="text-wrap underline underline-offset-1"
+                        >
+                          {article.pdf_url}
+                        </a>
+                      </span>
+                    </div>
+                  </CardFooter>
+                </Card>
+              </CarouselItem>
+            );
+          })}
         </CarouselContent>
       </Carousel>
     );
@@ -256,18 +257,16 @@ export default function PDFReviewerForm() {
             <CardHeader>
               <CardTitle>Overview</CardTitle>
               <CardDescription>
-                An overview regarding all aspects of the selected scientific paper.
+                An overview regarding all aspects of the selected scientific
+                paper.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="prose max-w-none whitespace-pre-wrap space-y-1">
-                {
-                  reviewResult?.review_content
-                }
+                {reviewResult?.review_content}
               </div>
             </CardContent>
-            <CardFooter>
-            </CardFooter>
+            <CardFooter></CardFooter>
           </Card>
         </TabsContent>
         <TabsContent value="novelty">
@@ -275,18 +274,17 @@ export default function PDFReviewerForm() {
             <CardHeader>
               <CardTitle>Novelty Assessment</CardTitle>
               <CardDescription>
-                An assessment regarding the novelty of the selected scientific paper based on previous work within our database.
+                An assessment regarding the novelty of the selected scientific
+                paper based on previous work within our database.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="prose max-w-none whitespace-pre-wrap space-y-1">
-                {
-                  reviewResult?.novelty_assessment || "No direct assessment of novelty was performed."
-                }
+                {reviewResult?.novelty_assessment ||
+                  "No direct assessment of novelty was performed."}
               </div>
             </CardContent>
-            <CardFooter>
-            </CardFooter>
+            <CardFooter></CardFooter>
           </Card>
         </TabsContent>
         <TabsContent value="figure">
@@ -294,18 +292,17 @@ export default function PDFReviewerForm() {
             <CardHeader>
               <CardTitle>Figure Assessment</CardTitle>
               <CardDescription>
-                An assessment regarding the clarity and consistency of figures in respect to the content of the selected scientific paper.
+                An assessment regarding the clarity and consistency of figures
+                in respect to the content of the selected scientific paper.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="prose max-w-none whitespace-pre-wrap space-y-1">
-                {
-                  reviewResult?.figure_critic_assessment || "No direct assessment of the figures were performed."
-                }
+                {reviewResult?.figure_critic_assessment ||
+                  "No direct assessment of the figures were performed."}
               </div>
             </CardContent>
-            <CardFooter>
-            </CardFooter>
+            <CardFooter></CardFooter>
           </Card>
         </TabsContent>
       </Tabs>
@@ -316,8 +313,18 @@ export default function PDFReviewerForm() {
     return (
       <Tabs defaultValue="sample" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="sample">Sample Papers</TabsTrigger>
-          <TabsTrigger value="upload">Upload Your Own</TabsTrigger>
+          <TabsTrigger
+            value="sample"
+            onClick={() => setArticleSource("Sample")}
+          >
+            Sample Papers
+          </TabsTrigger>
+          <TabsTrigger
+            value="upload"
+            onClick={() => setArticleSource("Upload")}
+          >
+            Upload Your Own
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="sample">
           <Card>
@@ -330,8 +337,7 @@ export default function PDFReviewerForm() {
             <CardContent className="space-y-2 justify-items-center">
               {renderSampleArticleOptions()}
             </CardContent>
-            <CardFooter>
-            </CardFooter>
+            <CardFooter></CardFooter>
           </Card>
         </TabsContent>
         <TabsContent value="upload">
@@ -356,8 +362,7 @@ export default function PDFReviewerForm() {
                 />
               </div>
             </CardContent>
-            <CardFooter>
-            </CardFooter>
+            <CardFooter></CardFooter>
           </Card>
         </TabsContent>
       </Tabs>
@@ -366,9 +371,7 @@ export default function PDFReviewerForm() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="mb-8">
-        {renderPaperOptions()}
-      </div>
+      <div className="mb-8">{renderPaperOptions()}</div>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -410,8 +413,8 @@ export default function PDFReviewerForm() {
             {rateLimitInfo.remainingUserSubmissions > 0
               ? `${rateLimitInfo.remainingUserSubmissions} submissions remaining today`
               : `Daily limit reached. Next reset: ${new Date(
-                rateLimitInfo.nextResetTime!
-              ).toLocaleString()}`}
+                  rateLimitInfo.nextResetTime!
+                ).toLocaleString()}`}
           </div>
 
           <Button
@@ -422,8 +425,10 @@ export default function PDFReviewerForm() {
             {isLoading
               ? "Generating Review..."
               : rateLimitInfo.remainingUserSubmissions === 0
-                ? "Daily Limit Reached"
-                : "Generate Review"}
+              ? "Daily Limit Reached"
+              : articleSource === "Sample"
+              ? "Show Review"
+              : "Generate Review"}
           </Button>
         </form>
       </Form>
@@ -437,9 +442,9 @@ export default function PDFReviewerForm() {
       {(reviewResult || errorMessage) && (
         <div className="mt-8 p-6 bg-secondary rounded-lg">
           <h3 className="text-xl font-semibold mb-4">Generated Review</h3>
-          <div className="prose max-w-none whitespace-pre-wrap">{
-            (reviewResult) ? renderReviewTabs() : errorMessage
-          }</div>
+          <div className="prose max-w-none whitespace-pre-wrap">
+            {reviewResult ? renderReviewTabs() : errorMessage}
+          </div>
         </div>
       )}
     </div>
