@@ -39,29 +39,25 @@ export function ConfirmationModal({ isOpen, onClose, onConfirm }: ModalProps) {
               </p>
             </div>
 
-            <div className="bg-accent/50 p-4 rounded-lg border border-accent">
-              <h4 className="font-serif font-medium mb-2 text-foreground text-sm">
-                Watermarking
-              </h4>
-              <p className="text-foreground/90 leading-relaxed text-sm">
-                All generated reviews will contain watermarks to ensure they can
-                be detected if used as actual reviews. These reviews are
-                intended for research and demonstration purposes only.
-              </p>
-            </div>
-
             <div className="bg-secondary p-4 rounded-lg border border-border">
               <h4 className="font-serif font-medium mb-2 text-sm">Citation</h4>
               <p className="text-secondary-foreground text-sm">
                 If you use MAMORX in your research, please cite our work:
               </p>
               <div className="bg-muted/70 p-3 rounded-md mt-2 font-mono text-xs">
-                @article{"{"}mamorx2024,
+                @inproceedings{"{"}Taechoyotin2024mamorx,
                 <br />
                 &nbsp;&nbsp;title={"{"}MAMORX: Multi-agent Multi-Modal
-                Scientific Review Generation{"}"}, <br />
-                &nbsp;&nbsp;author={"{"}Anonymous{"}"}, <br />
-                &nbsp;&nbsp;year={"{"}2024{"}"}
+                Scientific Review Generation with External Knowledge{"}"},{" "}
+                <br />
+                &nbsp;&nbsp;author={"{"}Pawin Taechoyotin and Guanchao Wang and
+                Tong Zeng and Bradley Sides and Daniel Acuna{"}"}, <br />
+                &nbsp;&nbsp;booktitle={"{"}Neurips 2024 Workshop Foundation
+                Models for Science: Progress, Opportunities, and Challenges{"}"}
+                , <br />
+                &nbsp;&nbsp;year={"{"}2024{"}"}, <br />
+                &nbsp;&nbsp;url={"{"}https://openreview.net/forum?id=frvkE8rCfX
+                {"}"}
                 <br />
                 {"}"}
               </div>

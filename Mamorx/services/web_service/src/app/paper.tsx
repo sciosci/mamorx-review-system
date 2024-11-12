@@ -1,6 +1,6 @@
 import React from "react";
 import Navbar from "@/components/ui/navbar";
-
+import Link from "next/link";
 export default function Paper() {
   return (
     <div>
@@ -14,9 +14,15 @@ export default function Paper() {
           <div className="bg-muted/50 p-6 rounded-lg mb-8">
             <h2 className="text-xl font-medium mb-2">Publication Venue</h2>
             <p>
-              Accepted at the Workshop on Foundation Models for Science:
-              Progress, Opportunities, and Challenges (FM4Science) at NeurIPS
-              2024
+              Accepted at the{" "}
+              <Link
+                href="https://fm-science.github.io/cfp.html"
+                className="text-primary hover:underline"
+              >
+                Workshop on Foundation Models for Science: Progress,
+                Opportunities, and Challenges (FM4Science)
+              </Link>{" "}
+              at NeurIPS 2024
             </p>
             <p className="text-sm text-muted-foreground mt-2">
               December 15, 2024 • Vancouver, Canada • Meeting Room #202-204
