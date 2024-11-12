@@ -1,7 +1,6 @@
 from sklearn.linear_model import LogisticRegression
 import numpy as np
 import pandas as pd
-import math
 from tabulate import tabulate
 from colorama import Fore, Back, Style, init
 
@@ -13,7 +12,7 @@ INIT_RATING = 1500
 sample_weight = None
 
 
-def compute_corrected_elo_mle_with_covariates(df):
+def compute_corrected_elo_mle_with_covariates(df, analysis_dimension="overall_quality"):
     # Initialize matrices for X (features) and Y (outcome)
     reviewers = sorted(set(df["reviewer_a"].unique()) | set(df["reviewer_b"].unique()))
     reviewer_to_index = {reviewer: i for i, reviewer in enumerate(reviewers)}
@@ -47,17 +46,17 @@ def compute_corrected_elo_mle_with_covariates(df):
 
         covariate_vector = np.array([new_lines_diff, sections_diff, lists_diff])
 
-        if row["overall_quality"] == "👈  A is better":
+        if row[analysis_dimension] == "👈  A is better":
             Y.append(1)
             reviewer_feature_list.append(reviewer_vector)
             covariate_feature_list.append(covariate_vector)
             sample_weights.append(2)
-        elif row["overall_quality"] == "👉  B is better":
+        elif row[analysis_dimension] == "👉  B is better":
             Y.append(0)
             reviewer_feature_list.append(reviewer_vector)
             covariate_feature_list.append(covariate_vector)
             sample_weights.append(2)
-        elif row["overall_quality"] == "🤝  Tie":
+        elif row[analysis_dimension] == "🤝  Tie":
             Y.append(1)
             reviewer_feature_list.append(reviewer_vector)
             covariate_feature_list.append(covariate_vector)
@@ -70,13 +69,11 @@ def compute_corrected_elo_mle_with_covariates(df):
 
     X_reviewer = np.vstack(reviewer_feature_list)
     X_covariate = np.vstack(covariate_feature_list)
+
     # normalize the covariate features to be min max scaled
     X_covariate = (X_covariate - np.min(X_covariate)) / (
         np.max(X_covariate) - np.min(X_covariate)
     )
-    X_covariate += 1
-    X_covariate /= 3
-    X_covariate = np.log(X_covariate)
 
     X = np.hstack((X_reviewer, X_covariate))
     Y = np.array(Y)
@@ -91,10 +88,7 @@ def compute_corrected_elo_mle_with_covariates(df):
     final_elo_corrected = pd.Series(elo_scores_corrected, index=reviewers).sort_values(
         ascending=False
     )
-    # print how much in Elo the covariates added (for each covariate)
-    for i, covariate in enumerate(covariate_names):
-        print(f"{covariate}: {(lr_corrected.coef_[0][len(reviewers) + i] ):.1f} Elo")
-    print(lr_corrected.coef_[0])
+
     # remove the covariate part for the uncorrected elo
     lr_uncorrected = LogisticRegression(fit_intercept=False, penalty=None, tol=1e-6)
     lr_uncorrected.fit(X[:, :p], Y, sample_weight=sample_weights)
@@ -110,8 +104,6 @@ def compute_corrected_elo_mle_with_covariates(df):
     final_elo_covariate = pd.Series(
         elo_scores_covariate, index=covariate_names
     ).sort_values(ascending=False)
-    for i, covariate in enumerate(covariate_names):
-        print(f"{covariate}: {lr_covariate.coef_[0][i]:.1f} Elo")
 
     # create a dataframe with the elo scores
     elo_df = pd.DataFrame(
@@ -123,141 +115,148 @@ def compute_corrected_elo_mle_with_covariates(df):
         index=reviewers,
     ).sort_values(by="elo_score", ascending=False)
     # create difference column
-    elo_df["elo_score_difference"] = (
-        elo_df["elo_score"] - elo_df["elo_score_uncorrected"]
-    )
+    # elo_df["elo_score_difference"] = (
+    #     elo_df["elo_score"] - elo_df["elo_score_uncorrected"]
+    # )
     return elo_df
 
 
-# Display the computed Elo scores
-df = pd.read_csv("arena_votes.csv")
+def elo_win_probability(elo_a, elo_b):
+    return 1 / (1 + BASE ** ((elo_b - elo_a) / SCALE))
 
 
-import re
+def main():
 
+    # Display the computed Elo scores
+    df = pd.read_csv("arena_votes.csv")
 
-# Define functions to calculate covariates for new lines, sections, and lists
-def count_new_lines(text):
-    return text.count("\n")
+    import re
 
+    # Define functions to calculate covariates for new lines, sections, and lists
+    def count_new_lines(text):
+        return text.count("\n")
 
-def count_sections(text):
-    return len(re.findall(r"\w+:", text))
+    def count_sections(text):
+        return len(re.findall(r"\w+:", text))
 
+    def count_lists(text):
+        return len(re.findall(r"(\d+\.\s|\-\s|\*\s)", text))
 
-def count_lists(text):
-    return len(re.findall(r"(\d+\.\s|\-\s|\*\s)", text))
+    # Apply these functions to both review_a and review_b columns
+    df["review_a_newlines"] = df["review_a"].apply(count_new_lines)
+    df["review_b_newlines"] = df["review_b"].apply(count_new_lines)
 
+    df["review_a_sections"] = df["review_a"].apply(count_sections)
+    df["review_b_sections"] = df["review_b"].apply(count_sections)
 
-# Apply these functions to both review_a and review_b columns
-df["review_a_newlines"] = df["review_a"].apply(count_new_lines)
-df["review_b_newlines"] = df["review_b"].apply(count_new_lines)
+    df["review_a_lists"] = df["review_a"].apply(count_lists)
+    df["review_b_lists"] = df["review_b"].apply(count_lists)
 
-df["review_a_sections"] = df["review_a"].apply(count_sections)
-df["review_b_sections"] = df["review_b"].apply(count_sections)
+    comparison_combination = [
+        {"use_covariates": False, "analysis_dimension": "technical_quality"},
+        {"use_covariates": False, "analysis_dimension": "constructiveness"},
+        {"use_covariates": False, "analysis_dimension": "clarity"},
+        {"use_covariates": False, "analysis_dimension": "overall_quality"},
+        {"use_covariates": True, "analysis_dimension": "overall_quality"},
+    ]
 
-df["review_a_lists"] = df["review_a"].apply(count_lists)
-df["review_b_lists"] = df["review_b"].apply(count_lists)
+    all_elo_scores = pd.DataFrame()
+    for combination in comparison_combination:
+        elo_scores = compute_corrected_elo_mle_with_covariates(
+            df, analysis_dimension=combination["analysis_dimension"]
+        )
+        if combination["use_covariates"]:
+            elo_scores.rename(
+                columns={
+                    "elo_score": f"{combination['analysis_dimension']}_elo_corrected"
+                },
+                inplace=True,
+            )
+            if all_elo_scores.empty:
+                all_elo_scores = elo_scores[
+                    ["reviewer", f"{combination['analysis_dimension']}_elo_corrected"]
+                ]
+            else:
+                all_elo_scores = pd.merge(
+                    all_elo_scores,
+                    elo_scores[
+                        [
+                            "reviewer",
+                            f"{combination['analysis_dimension']}_elo_corrected",
+                        ]
+                    ],
+                    on="reviewer",
+                    how="outer",
+                )
+        else:
+            elo_scores.rename(
+                columns={
+                    "elo_score_uncorrected": f"{combination['analysis_dimension']}_elo_uncorrected"
+                },
+                inplace=True,
+            )
+            if all_elo_scores.empty:
+                all_elo_scores = elo_scores[
+                    ["reviewer", f"{combination['analysis_dimension']}_elo_uncorrected"]
+                ]
+            else:
+                all_elo_scores = pd.merge(
+                    all_elo_scores,
+                    elo_scores[
+                        [
+                            "reviewer",
+                            f"{combination['analysis_dimension']}_elo_uncorrected",
+                        ]
+                    ],
+                    on="reviewer",
+                    how="outer",
+                )
+    all_elo_scores.reset_index(drop=True, inplace=True)
 
-elo_scores = compute_corrected_elo_mle_with_covariates(df)
+    # Define the desired order of reviewers
+    reviewer_order = [
+        "human_reviewer",
+        "barebones",
+        "liang_etal",
+        "multi_agent_without_knowledge",
+        "multi_agent_with_knowledge",
+    ]
 
-# Prepare data for tabulate
-data = []
-for _, row in elo_scores.iterrows():
-    difference = row["elo_score"] - row["elo_score_uncorrected"]
-    if difference > 0:
-        change = f"{Fore.GREEN}▲ {difference:.1f}{Style.RESET_ALL}"
-    elif difference < 0:
-        change = f"{Fore.RED}▼ {abs(difference):.1f}{Style.RESET_ALL}"
-    else:
-        change = f"{Fore.YELLOW}━{Style.RESET_ALL}"
-
-    data.append(
-        [
-            row["reviewer"],
-            f"{row['elo_score']:.1f}",
-            f"{row['elo_score_uncorrected']:.1f}",
-            change,
-        ]
+    # Reorder the DataFrame according to the specified order
+    all_elo_scores = (
+        all_elo_scores.set_index("reviewer").loc[reviewer_order].reset_index()
     )
+    print(tabulate(all_elo_scores, headers="keys", tablefmt="grid", showindex=False))
 
-# Create a colorful table
-headers = [
-    f"{Fore.CYAN}Reviewer{Style.RESET_ALL}",
-    f"{Fore.GREEN}Corrected ELO{Style.RESET_ALL}",
-    f"{Fore.YELLOW}Uncorrected ELO{Style.RESET_ALL}",
-    f"{Fore.MAGENTA}Change{Style.RESET_ALL}",
-]
+    # Calculate and display the probability of reviewer A being better than reviewer B
+    # using the uncorrected elo scores for overall quality
 
-table = tabulate(data, headers=headers, tablefmt="fancy_grid")
+    # Extract uncorrected elo scores for overall quality and reviewer names
+    uncorrected_elo_scores = all_elo_scores["overall_quality_elo_uncorrected"]
+    # set the index to be the reviewer names
+    uncorrected_elo_scores.index = all_elo_scores["reviewer"]
+    reviewer_names = all_elo_scores["reviewer"]
 
-# Add a title
-title = f"{Fore.MAGENTA}{Style.BRIGHT}ELO Scores Comparison{Style.RESET_ALL}"
-print(f"\n{title:^{len(table.splitlines()[0])}}\n")
+    # Calculate the probability of reviewer A being better than reviewer B
+    # using the formula: 1 / (1 + 10^(elo_score_B - elo_score_A / 400))
+    probabilities = pd.DataFrame(
+        data=np.zeros((len(reviewer_names), len(reviewer_names))),
+        index=reviewer_order,  # Use the ordered list here
+        columns=reviewer_order,  # And here
+    )
+    for reviewer_a in reviewer_names:
+        for reviewer_b in reviewer_names:
+            elo_score_a = uncorrected_elo_scores.loc[reviewer_a]
+            elo_score_b = uncorrected_elo_scores.loc[reviewer_b]
+            probability = elo_win_probability(elo_score_a, elo_score_b)
+            probabilities.loc[reviewer_a, reviewer_b] = probability * 100
 
-# Print the table
-print(table)
-
-# Add a legend
-print(f"\n{Fore.CYAN}Legend:{Style.RESET_ALL}")
-print(f"{Fore.GREEN}Corrected ELO: Scores adjusted for covariates{Style.RESET_ALL}")
-print(
-    f"{Fore.YELLOW}Uncorrected ELO: Raw scores without covariate adjustment{Style.RESET_ALL}"
-)
-print(
-    f"{Fore.MAGENTA}Change: Difference between Corrected and Uncorrected ELO{Style.RESET_ALL}"
-)
-print(f"  {Fore.GREEN}▲: Increase{Style.RESET_ALL}")
-print(f"  {Fore.RED}▼: Decrease{Style.RESET_ALL}")
-print(f"  {Fore.YELLOW}━: No change{Style.RESET_ALL}")
-
-
-# Calculate probability matrices
-def calculate_win_probability(elo_i, elo_j):
-    return 1 / (1 + 10 ** ((elo_j - elo_i) / 400))
+    # round to 2 decimal places
+    probabilities = probabilities.round(2)
+    print()
+    # Display the probabilities in a table with reviewer names as headers and indices
+    print(tabulate(probabilities, headers="keys", tablefmt="grid"))
 
 
-reviewers = elo_scores["reviewer"].tolist()
-n = len(reviewers)
-
-corrected_probs = np.zeros((n, n))
-uncorrected_probs = np.zeros((n, n))
-
-for i in range(n):
-    for j in range(n):
-        elo_i = elo_scores.iloc[i]
-        elo_j = elo_scores.iloc[j]
-        corrected_probs[i, j] = calculate_win_probability(
-            elo_i["elo_score"], elo_j["elo_score"]
-        )
-        uncorrected_probs[i, j] = calculate_win_probability(
-            elo_i["elo_score_uncorrected"], elo_j["elo_score_uncorrected"]
-        )
-
-
-# Display probability matrices
-def display_probability_matrix(matrix, title):
-    print(f"\n{Fore.CYAN}{Style.BRIGHT}{title}{Style.RESET_ALL}")
-    max_reviewer_length = max(len(reviewer) for reviewer in reviewers)
-    column_width = max(max_reviewer_length, 10)
-
-    print(f"{Fore.YELLOW}{'':{column_width}}", end="")
-    for reviewer in reviewers:
-        print(f"{reviewer:>{column_width}}", end="")
-    print(Style.RESET_ALL)
-
-    for i, row in enumerate(matrix):
-        print(f"{Fore.YELLOW}{reviewers[i]:{column_width}}{Style.RESET_ALL}", end="")
-        for prob in row:
-            color = Fore.GREEN if prob > 0.5 else Fore.RED if prob < 0.5 else Fore.WHITE
-            print(f"{color}{prob:{column_width}.2f}{Style.RESET_ALL}", end="")
-        print()
-
-
-display_probability_matrix(corrected_probs, "Corrected ELO Win Probabilities")
-display_probability_matrix(uncorrected_probs, "Uncorrected ELO Win Probabilities")
-
-print(f"\n{Fore.CYAN}Legend:{Style.RESET_ALL}")
-print(f"{Fore.GREEN}>0.50: Higher probability of winning{Style.RESET_ALL}")
-print(f"{Fore.RED}<0.50: Lower probability of winning{Style.RESET_ALL}")
-print(f"{Fore.WHITE}=0.50: Equal probability{Style.RESET_ALL}")
+if __name__ == "__main__":
+    main()
