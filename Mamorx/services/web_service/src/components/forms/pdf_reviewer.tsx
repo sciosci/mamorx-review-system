@@ -41,6 +41,15 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious
+} from "@/components/ui/carousel";
+import { ScrollText, Users, MessageCircle, ArrowUpRight } from 'lucide-react';
+
 
 const FormSchema = z.object({
   review_type: z.string({
@@ -70,7 +79,7 @@ export default function PDFReviewerForm() {
     nextResetTime: null,
   });
   const [articleSource, setArticleSource] = React.useState<"Sample" | "Upload">("Sample");
-  const [sampleArticleIndex, setSampleArticleIndex] = React.useState<number>(-1);
+  const [sampleArticleIndex, setSampleArticleIndex] = React.useState<number>(0);
   const [reviewResult, setReviewResult] = React.useState<ReviewResult | undefined>(undefined);
   const [errorMessage, setErrorMessage] = React.useState<string>("");
 
@@ -191,13 +200,47 @@ export default function PDFReviewerForm() {
   }
 
   function renderSampleArticleOptions() {
-    return SAMPLE_REVIEWS.map((article, index) => {
-      return (
-        <Card className={`mt-2 mb-2 cursor-pointer ${sampleArticleIndex == index ? "border-blue-500 border-2" : ""}`} key={article.paper_id} onClick={() => { handleSelectSampleArticle(index) }}>
-          <h4 className="text-3l">{article.title}</h4>
-        </Card>
-      );
-    })
+    return (
+      <Carousel className="w-full max-w-xl " orientation="vertical">
+        <CarouselContent className="content-center">
+          {
+            SAMPLE_REVIEWS.map((article, index) => {
+              return (
+                <CarouselItem key={article.paper_id} className="content-center md:basis-1/2 lg:basis-1/3">
+                  <Card className={`mt-2 mb-2 min-h-[6rem] content-center justify-items-center cursor-pointer ${sampleArticleIndex == index ? "border-blue-500 border-2" : ""}`} onClick={() => { handleSelectSampleArticle(index) }}>
+                    <CardHeader className="space-y-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <CardTitle className="text-xl font-bold leading-tight">
+                          {article.title}
+                        </CardTitle>
+                        <ArrowUpRight className="w-5 h-5 flex-shrink-0 text-gray-400" />
+                      </div>
+
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Users className="w-4 h-4" />
+                        <span>{article.authors}</span>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {/* <h4 className="text-3l m-2 text-center">{article.title}</h4>
+                      <p className="text-3m m-2 text-center">{article.title}</p> */}
+                    </CardContent>
+                    <CardFooter className="break-all">
+                      <div className="text-sm text-gray-600">
+                        <span className="font-medium">DOI: </span>
+                        <span className="text-blue-600 hover:underline">
+                          <a href={article.pdf_url} className="text-wrap underline underline-offset-1">{article.pdf_url}</a>
+                        </span>
+                      </div>
+                    </CardFooter>
+                  </Card>
+                </CarouselItem>
+              );
+            })
+          }
+        </CarouselContent>
+      </Carousel>
+    );
   }
 
   function renderReviewTabs() {
@@ -284,7 +327,7 @@ export default function PDFReviewerForm() {
                 Try out the reviews from 3 of our sample scientific papers.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="space-y-2 justify-items-center">
               {renderSampleArticleOptions()}
             </CardContent>
             <CardFooter>
