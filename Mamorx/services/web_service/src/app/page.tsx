@@ -1,6 +1,7 @@
 import PDFReviewerForm from "@/components/forms/pdf_reviewer";
 import Navbar from "@/components/ui/navbar";
 import Footer from "@/components/ui/footer";
+import { FileText } from "lucide-react";
 
 export default function Home() {
   return (
@@ -19,6 +20,18 @@ export default function Home() {
               multi-modal foundation models and external knowledge to provide
               comprehensive scientific paper analysis.
             </p>
+          </div>
+
+          <div className="flex justify-center">
+            <a
+              href="https://openreview.net/pdf?id=frvkE8rCfX"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium text-lg"
+            >
+              <FileText className="h-5 w-5" />
+              Read the Paper
+            </a>
           </div>
 
           <div className="bg-card rounded-xl shadow-md p-8 border border-border/50">
