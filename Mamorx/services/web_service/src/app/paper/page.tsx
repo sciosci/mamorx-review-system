@@ -113,7 +113,7 @@ export default async function PaperPage() {
             <ul className="list-disc pl-5 space-y-2">
               <li>
                 <a
-                  href="https://anonymous.4open.science/r/MAMORX-BD44"
+                  href="https://github.com/sciosci/mamorx-review-system"
                   className="text-primary hover:underline"
                 >
                   Project Repository
