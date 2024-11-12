@@ -39,12 +39,15 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { ConfirmationModal } from "@/components/ui/modal";
-import { ArrowUpRight, Users } from "lucide-react";
+import { ArrowUpRight, Users, Loader2, AlertTriangle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Progress } from "@/components/ui/progress";
 
 const FormSchema = z.object({
   review_type: z.string({
     required_error: "Please select a review source.",
   }),
+  pdf_file: z.any().optional(),
 });
 
 interface RateLimitState {
@@ -56,6 +59,9 @@ interface RateLimitState {
 export default function PDFReviewerForm() {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
+    defaultValues: {
+      pdf_file: undefined,
+    },
   });
   const [inputFile, setInputFile] = React.useState<File>();
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
@@ -76,6 +82,10 @@ export default function PDFReviewerForm() {
     ReviewResult | undefined
   >(undefined);
   const [errorMessage, setErrorMessage] = React.useState<string>("");
+  const [elapsedTime, setElapsedTime] = React.useState<number>(0);
+  const timerRef = React.useRef<NodeJS.Timeout>();
+  const [progress, setProgress] = React.useState(0);
+  const progressRef = React.useRef<NodeJS.Timeout>();
 
   async function fetchRateLimitInfo() {
     try {
@@ -100,13 +110,76 @@ export default function PDFReviewerForm() {
     fetchRateLimitInfo();
   }, []);
 
+  React.useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, []);
+
+  React.useEffect(() => {
+    return () => {
+      if (progressRef.current) {
+        clearInterval(progressRef.current);
+      }
+    };
+  }, []);
+
   function handlePDFChange(e: React.ChangeEvent<HTMLInputElement>) {
     if (e.target?.files?.[0]) {
       const file = e.target.files[0];
       setInputFile(file);
+      form.setValue("pdf_file", file);
+    } else {
+      setInputFile(undefined);
+      form.setValue("pdf_file", undefined);
     }
     setArticleSource("Upload");
     setSampleArticleIndex(-1);
+  }
+
+  function getReviewDuration(reviewType: string): number {
+    switch (reviewType) {
+      case "barebones":
+        return 10 * 1000; // 10 seconds
+      case "liangetal":
+        return 20 * 1000; // 20 seconds
+      case "multiagent":
+        return 10 * 60 * 1000; // 10 minutes
+      case "mamorx":
+        return 15 * 60 * 1000; // 15 minutes
+      default:
+        return 30 * 1000; // fallback
+    }
+  }
+
+  function simulateProgress(totalDuration: number) {
+    setProgress(0);
+    let elapsed = 0;
+
+    // Clear any existing interval
+    if (progressRef.current) {
+      clearInterval(progressRef.current);
+    }
+
+    progressRef.current = setInterval(() => {
+      elapsed += Math.random() * 1000; // Random increment between 0-1000ms
+
+      if (elapsed >= totalDuration) {
+        setProgress(95); // Cap at 95%
+        if (progressRef.current) {
+          clearInterval(progressRef.current);
+        }
+      } else {
+        // Calculate progress with diminishing returns
+        const newProgress = Math.min(
+          95,
+          (elapsed / totalDuration) * 100 * (1 - elapsed / totalDuration / 2)
+        );
+        setProgress(newProgress);
+      }
+    }, 500 + Math.random() * 1000); // Random interval between 500-1500ms
   }
 
   async function submitFormToServer(review_type: string) {
@@ -119,6 +192,15 @@ export default function PDFReviewerForm() {
 
     try {
       setIsLoading(true);
+      setElapsedTime(0);
+
+      // Start the progress simulation
+      simulateProgress(getReviewDuration(review_type));
+
+      timerRef.current = setInterval(() => {
+        setElapsedTime((prev) => prev + 1);
+      }, 1000);
+
       const res = await axios.post("/api/generate-review", formData, {
         headers: headers,
       });
@@ -137,6 +219,9 @@ export default function PDFReviewerForm() {
 
       setReviewResult(res.data);
       setErrorMessage("");
+
+      // When response is received:
+      setProgress(100);
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 429) {
         setReviewResult(undefined);
@@ -150,10 +235,24 @@ export default function PDFReviewerForm() {
       }
     } finally {
       setIsLoading(false);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+      if (progressRef.current) {
+        clearInterval(progressRef.current);
+      }
     }
   }
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
+    if (articleSource === "Upload" && !inputFile) {
+      form.setError("pdf_file", {
+        type: "required",
+        message: "Please select a PDF file",
+      });
+      return;
+    }
+
     if (articleSource == "Upload") {
       setPendingSubmission(data);
       setShowModal(true);
@@ -341,14 +440,11 @@ export default function PDFReviewerForm() {
             <CardHeader>
               <CardTitle>Upload PDF</CardTitle>
               <CardDescription>
-                Try out the review on your own scientifc paper.
+                Try out the review on your own scientific paper.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="space-y-4 justify-items-center">
-                {/* <Label htmlFor="file" className="text-lg">
-                  Upload Paper
-                </Label> */}
                 <Input
                   id="pdf_file"
                   type="file"
@@ -365,12 +461,66 @@ export default function PDFReviewerForm() {
     );
   }
 
+  function formatTime(seconds: number): string {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+  }
+
+  function renderLoadingState() {
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-col items-center justify-center gap-2">
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <span className="text-lg font-medium">Generating Review...</span>
+          </div>
+          <div className="w-full space-y-2">
+            <Progress value={progress} className="w-full" />
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>Progress: {Math.round(progress)}%</span>
+              <span>Time elapsed: {formatTime(elapsedTime)}</span>
+            </div>
+          </div>
+        </div>
+
+        <Alert variant="destructive" className="bg-yellow-50 border-yellow-500">
+          <AlertTriangle className="h-5 w-5" />
+          <AlertTitle>Please do not close or reload this page</AlertTitle>
+          <AlertDescription>
+            Multi-agent reviews can take up to 15 minutes to generate. Closing
+            or reloading the page will cancel the review generation and your
+            progress will be lost.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto">
       <div className="mb-8">{renderPaperOptions()}</div>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <FormField
+            control={form.control}
+            name="pdf_file"
+            render={({ field }) => (
+              <FormItem className="hidden">
+                <FormControl>
+                  <Input
+                    type="text"
+                    {...field}
+                    value={inputFile?.name || ""}
+                    onChange={() => {}}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           <FormField
             control={form.control}
             name="review_type"
@@ -418,7 +568,8 @@ export default function PDFReviewerForm() {
             disabled={
               isLoading ||
               rateLimitInfo.remainingUserSubmissions === 0 ||
-              !form.getValues("review_type")
+              !form.getValues("review_type") ||
+              (articleSource === "Upload" && !inputFile)
             }
             className="w-full py-6 text-lg"
           >
@@ -430,6 +581,8 @@ export default function PDFReviewerForm() {
               ? "Show Review"
               : "Generate Review"}
           </Button>
+
+          {isLoading && <div className="mt-4">{renderLoadingState()}</div>}
         </form>
       </Form>
 
