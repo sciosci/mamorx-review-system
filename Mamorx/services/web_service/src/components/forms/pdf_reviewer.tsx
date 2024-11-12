@@ -14,19 +14,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { useState } from "react";
-import { ConfirmationModal } from "@/components/ui/modal";
 import { SAMPLE_REVIEWS } from "@/data/sample_reviews";
 import { ReviewResult } from "@/interface";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+} from "@/components/ui/carousel";
 import {
   Card,
   CardContent,
@@ -37,13 +31,15 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
-import { ScrollText, Users, MessageCircle, ArrowUpRight } from "lucide-react";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { ConfirmationModal } from "@/components/ui/modal";
+import { ArrowUpRight, Users } from "lucide-react";
 
 const FormSchema = z.object({
   review_type: z.string({
@@ -62,12 +58,12 @@ export default function PDFReviewerForm() {
     resolver: zodResolver(FormSchema),
   });
   const [inputFile, setInputFile] = React.useState<File>();
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [showModal, setShowModal] = useState(false);
-  const [pendingSubmission, setPendingSubmission] = useState<z.infer<
+  const [isLoading, setIsLoading] = React.useState<boolean>(false);
+  const [showModal, setShowModal] = React.useState(false);
+  const [pendingSubmission, setPendingSubmission] = React.useState<z.infer<
     typeof FormSchema
   > | null>(null);
-  const [rateLimitInfo, setRateLimitInfo] = useState<RateLimitState>({
+  const [rateLimitInfo, setRateLimitInfo] = React.useState<RateLimitState>({
     remainingUserSubmissions: 3,
     remainingTotalSubmissions: 500,
     nextResetTime: null,
@@ -419,7 +415,11 @@ export default function PDFReviewerForm() {
 
           <Button
             type="submit"
-            disabled={isLoading || rateLimitInfo.remainingUserSubmissions === 0}
+            disabled={
+              isLoading ||
+              rateLimitInfo.remainingUserSubmissions === 0 ||
+              !form.getValues("review_type")
+            }
             className="w-full py-6 text-lg"
           >
             {isLoading
