@@ -39,9 +39,10 @@ export default async function CodePage() {
                 <div className="flex justify-center">
                   <Button asChild size="lg">
                     <a
-                      href="https://anonymous.4open.science/r/MAMORX-BD44"
+                      href="https://github.com/sciosci/mamorx-review-system"
                       target="_blank"
                       rel="noopener noreferrer"
+                      className="w-full text-3xl"
                     >
                       Access Repository
                     </a>
