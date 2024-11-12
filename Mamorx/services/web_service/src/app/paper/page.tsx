@@ -23,20 +23,16 @@ export default async function PaperPage() {
             <h2 className="text-xl font-medium mb-2">Authors</h2>
             <div className="space-y-2">
               <p>
-                Pawin Taechoyotin<sup>1</sup>, Guanchao Wang<sup>1</sup>, Tong
-                Zeng<sup>2</sup>, Bradley Sides<sup>1</sup>, Daniel Acuna
-                <sup>1</sup>
+                Pawin Taechoyotin<sup>*</sup>, Guanchao Wang<sup>*</sup>, Tong
+                Zeng, Bradley Sides, Daniel Acuna<sup>+</sup>
               </p>
               <p className="text-sm text-muted-foreground">
-                <sup>1</sup>University of Colorado Boulder
-                <br />
-                <sup>2</sup>Virginia Tech
+                University of Colorado Boulder
               </p>
               <p className="text-sm text-muted-foreground break-words">
-                {"{"}pawin.taechoyotin,guanchao.wang,bradley.sides,daniel.acuna
-                {"}"}@colorado.edu
+                <sup>*</sup>Equal contribution.
                 <br />
-                tongzeng@vt.edu
+                <sup>+</sup>Corresponding author: daniel.acuna@colorado.edu
               </p>
             </div>
           </div>
