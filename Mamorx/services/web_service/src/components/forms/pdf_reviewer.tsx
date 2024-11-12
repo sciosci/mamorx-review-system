@@ -269,37 +269,62 @@ export default function PDFReviewerForm() {
     );
   }
 
+  function renderPaperOptions() {
+    return (
+      <Tabs defaultValue="sample" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="sample">Sample Papers</TabsTrigger>
+          <TabsTrigger value="upload">Upload Your Own</TabsTrigger>
+        </TabsList>
+        <TabsContent value="sample">
+          <Card>
+            <CardHeader>
+              <CardTitle>Reviews from Sample Papers</CardTitle>
+              <CardDescription>
+                Try out the reviews from 3 of our sample scientific papers.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {renderSampleArticleOptions()}
+            </CardContent>
+            <CardFooter>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+        <TabsContent value="upload">
+          <Card>
+            <CardHeader>
+              <CardTitle>Upload PDF</CardTitle>
+              <CardDescription>
+                Try out the review on your own scientifc paper.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div className="space-y-4 justify-items-center">
+                {/* <Label htmlFor="file" className="text-lg">
+                  Upload Paper
+                </Label> */}
+                <Input
+                  id="pdf_file"
+                  type="file"
+                  accept=".pdf"
+                  onChange={handlePDFChange}
+                  className="cursor-pointer"
+                />
+              </div>
+            </CardContent>
+            <CardFooter>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto">
       <div className="mb-8">
-        <div className="grid grid-cols-12">
-          <Card className="col-span-5 justify-items-center">
-            <p className="text-muted-foreground m-2">
-              Try out the reviews from 3 of
-              our sample scientifc papers
-            </p>
-            {renderSampleArticleOptions()}
-          </Card>
-          <div className="col-span-2 content-center text-center">OR</div>
-          <Card className={`col-span-5 justify-items-center ${sampleArticleIndex == -1 ? "border-blue-500 border-2" : ""}`}>
-            <p className="text-muted-foreground m-2">
-              Upload your scientific paper and select a review type to generate an
-              AI-powered comprehensive review.
-            </p>
-            <div className="space-y-4 justify-items-center">
-              <Label htmlFor="file" className="text-lg">
-                Upload Paper
-              </Label>
-              <Input
-                id="pdf_file"
-                type="file"
-                accept=".pdf"
-                onChange={handlePDFChange}
-                className="cursor-pointer"
-              />
-            </div>
-          </Card>
-        </div>
+        {renderPaperOptions()}
       </div>
 
       <Form {...form}>
