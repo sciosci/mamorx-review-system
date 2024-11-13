@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Merriweather } from "next/font/google";
 import "./globals.css";
-
+import { CSPostHogProvider } from "./providers";
 const merriweather = Merriweather({
   subsets: ["latin"],
   weight: ["300", "400", "700", "900"],
@@ -27,11 +27,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${merriweather.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
-      </body>
+      <CSPostHogProvider>
+        <body
+          className={`${merriweather.variable} ${geistMono.variable} antialiased`}
+        >
+          {children}
+        </body>
+      </CSPostHogProvider>
     </html>
   );
 }
