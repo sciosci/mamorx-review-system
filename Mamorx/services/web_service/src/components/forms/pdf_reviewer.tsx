@@ -244,19 +244,28 @@ export default function PDFReviewerForm() {
     }
   }
 
-  async function onSubmit(data: z.infer<typeof FormSchema>) {
-    if (articleSource === "Upload" && !inputFile) {
-      form.setError("pdf_file", {
-        type: "required",
-        message: "Please select a PDF file",
-      });
-      return;
-    }
+  function onSubmit(data: z.infer<typeof FormSchema>) {
+    if (articleSource === "Upload") {
+      if (!inputFile) {
+        form.setError("pdf_file", {
+          type: "required",
+          message: "Please select a PDF file",
+        });
+        return;
+      }
 
-    if (articleSource == "Upload") {
+      // Only check rate limit for uploads
+      if (rateLimitInfo.remainingUserSubmissions === 0) {
+        setErrorMessage(
+          "You've reached the maximum number of submissions for today. Please try again tomorrow."
+        );
+        return;
+      }
+
       setPendingSubmission(data);
       setShowModal(true);
     } else {
+      // Sample reviews should always work regardless of rate limit
       if (data.review_type == "barebones") {
         setReviewResult(SAMPLE_REVIEWS[sampleArticleIndex].barebones);
       } else if (data.review_type == "liangetal") {
@@ -567,16 +576,17 @@ export default function PDFReviewerForm() {
             type="submit"
             disabled={
               isLoading ||
-              rateLimitInfo.remainingUserSubmissions === 0 ||
-              !form.getValues("review_type") ||
-              (articleSource === "Upload" && !inputFile)
+              (articleSource === "Upload" &&
+                (rateLimitInfo.remainingUserSubmissions === 0 || !inputFile)) ||
+              !form.getValues("review_type")
             }
             className="w-full py-6 text-lg"
           >
             {isLoading
               ? "Generating Review..."
-              : rateLimitInfo.remainingUserSubmissions === 0
-              ? "Daily Limit Reached"
+              : articleSource === "Upload" &&
+                rateLimitInfo.remainingUserSubmissions === 0
+              ? "Daily Upload Limit Reached"
               : articleSource === "Sample"
               ? "Show Review"
               : "Generate Review"}
