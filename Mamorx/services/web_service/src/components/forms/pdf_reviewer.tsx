@@ -56,6 +56,16 @@ interface RateLimitState {
   nextResetTime: string | null;
 }
 
+function formatDuration(ms: number): string {
+  if (ms < 60000) {
+    // less than a minute
+    return `${ms / 1000} seconds`;
+  } else {
+    // minutes
+    return `${ms / 60000} minutes`;
+  }
+}
+
 export default function PDFReviewerForm() {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -146,9 +156,9 @@ export default function PDFReviewerForm() {
       case "liangetal":
         return 20 * 1000; // 20 seconds
       case "multiagent":
-        return 10 * 60 * 1000; // 10 minutes
+        return 20 * 60 * 1000; // 25 minutes
       case "mamorx":
-        return 15 * 60 * 1000; // 15 minutes
+        return 30 * 60 * 1000; // 30 minutes
       default:
         return 30 * 1000; // fallback
     }
@@ -506,6 +516,13 @@ export default function PDFReviewerForm() {
     );
   }
 
+  const reviewTypes = [
+    { value: "barebones", label: "Barebones Review" },
+    { value: "liangetal", label: "Liang et al. Style" },
+    { value: "multiagent", label: "Multi-agent Review" },
+    { value: "mamorx", label: "MAMORX Review" },
+  ];
+
   return (
     <div className="max-w-4xl mx-auto">
       <div className="mb-8">{renderPaperOptions()}</div>
@@ -546,14 +563,12 @@ export default function PDFReviewerForm() {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="barebones">Barebones Review</SelectItem>
-                    <SelectItem value="liangetal">
-                      Liang et al. Style
-                    </SelectItem>
-                    <SelectItem value="multiagent">
-                      Multi-agent Review
-                    </SelectItem>
-                    <SelectItem value="mamorx">MAMORX Review</SelectItem>
+                    {reviewTypes.map((type) => (
+                      <SelectItem key={type.value} value={type.value}>
+                        {type.label} (approximately{" "}
+                        {formatDuration(getReviewDuration(type.value))})
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <FormDescription>

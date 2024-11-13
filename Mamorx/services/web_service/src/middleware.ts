@@ -11,14 +11,11 @@ export function middleware(request: NextRequest) {
   // Create new session if none exists
   if (!sessionId) {
     sessionId = uuidv4();
+
     // Set session cookie that expires in 24 hours
     response.cookies.set({
       name: "session_id",
       value: sessionId,
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 60 * 60 * 24, // 24 hours
     });
   }
 
