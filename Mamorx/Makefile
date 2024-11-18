@@ -31,3 +31,13 @@ push-web:
 	docker push $(DOCKERUSER)/web-service:$(VERSION)
 	docker tag web-service $(DOCKERUSER)/web-service:latest
 	docker push $(DOCKERUSER)/web-service:latest
+
+
+build-mamorx-worker:
+	docker build -f services/mamorx_worker/Dockerfile -t mamorx-worker .
+
+push-mamorx-worker:
+	docker tag mamorx-worker $(DOCKERUSER)/mamorx-worker:$(VERSION)
+	docker push $(DOCKERUSER)/mamorx-worker:$(VERSION)
+	docker tag mamorx-worker $(DOCKERUSER)/mamorx-worker:latest
+	docker push $(DOCKERUSER)/mamorx-worker:latest
