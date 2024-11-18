@@ -17,6 +17,7 @@ ratelimit = "^2.2.1"
 boto3 = "1.34.162"
 fastapi = {extras = ["standard"], version = "^0.115.4"}
 pydantic-settings = "^2.6.0"
+redis = "^5.2.0"
 
 
 [build-system]
