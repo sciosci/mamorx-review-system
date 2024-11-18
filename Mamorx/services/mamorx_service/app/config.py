@@ -16,5 +16,8 @@ class Settings(BaseSettings):
     grobid_config_file_path: str
     grobid_server_url: str
     disable_review: bool = False
+    redis_host: str = "redis"
+    redis_port: str = "6379"
+    redis_queue_name: str = "review-queue"
 
 settings = Settings()

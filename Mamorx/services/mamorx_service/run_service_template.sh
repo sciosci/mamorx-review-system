@@ -9,5 +9,10 @@ export AWS_SECRET_ACCESS_KEY=
 export AWS_DEFAULT_REGION=
 export FIGURE_CRITIC_URL=localhost:5001
 export GROBID_CONFIG_FILE_PATH=../../config/grobid_config.json
+export GROBID_SERVER_URL=http://localhost:8070
+export DISABLE_REVIEW=False
+export REDIS_HOST=localhost
+export REDIS_PORT=6379
+export REDIS_QUEUE_NAME=review-queue
 
 fastapi dev app/main.py
