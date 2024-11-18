@@ -2,3 +2,4 @@
 db/
 Makefile
 Dockerfile
+*__pycache__*
