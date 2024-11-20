@@ -15,11 +15,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { SAMPLE_REVIEWS } from "@/data/sample_reviews";
-import { ReviewResult, SessionJobs } from "@/interface";
+import { IReviewResult, ISessionJobs, IRateLimitState } from "@/interface";
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
 } from "@/components/ui/carousel";
 import {
   Card,
@@ -39,9 +41,9 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { ConfirmationModal } from "@/components/ui/modal";
-import { ArrowUpRight, Users, Loader2, AlertTriangle } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Progress } from "@/components/ui/progress";
+import { ArrowUpRight, Users } from "lucide-react";
+import { formatDuration, getReviewDuration } from "@/lib";
+import { REVIEW_TYPE_OPTIONS } from "@/data";
 
 const FormSchema = z.object({
   review_type: z.string({
@@ -49,22 +51,6 @@ const FormSchema = z.object({
   }),
   pdf_file: z.any().optional(),
 });
-
-interface RateLimitState {
-  remainingUserSubmissions: number;
-  remainingTotalSubmissions: number;
-  nextResetTime: string | null;
-}
-
-function formatDuration(ms: number): string {
-  if (ms < 60000) {
-    // less than a minute
-    return `${ms / 1000} seconds`;
-  } else {
-    // minutes
-    return `${ms / 60000} minutes`;
-  }
-}
 
 export default function PDFReviewerForm() {
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -74,12 +60,11 @@ export default function PDFReviewerForm() {
     },
   });
   const [inputFile, setInputFile] = React.useState<File>();
-  const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const [showModal, setShowModal] = React.useState(false);
   const [pendingSubmission, setPendingSubmission] = React.useState<z.infer<
     typeof FormSchema
   > | null>(null);
-  const [rateLimitInfo, setRateLimitInfo] = React.useState<RateLimitState>({
+  const [rateLimitInfo, setRateLimitInfo] = React.useState<IRateLimitState>({
     remainingUserSubmissions: 3,
     remainingTotalSubmissions: 500,
     nextResetTime: null,
@@ -89,15 +74,12 @@ export default function PDFReviewerForm() {
   );
   const [sampleArticleIndex, setSampleArticleIndex] = React.useState<number>(0);
   const [reviewResult, setReviewResult] = React.useState<
-    ReviewResult | undefined
+    IReviewResult | undefined
   >(undefined);
   const [errorMessage, setErrorMessage] = React.useState<string>("");
-  const [elapsedTime, setElapsedTime] = React.useState<number>(0);
-  const timerRef = React.useRef<NodeJS.Timeout>();
-  const [progress, setProgress] = React.useState(0);
-  const progressRef = React.useRef<NodeJS.Timeout>();
-  const [sessionJobs, setSessionJobs] = React.useState<SessionJobs | undefined>();
+  const [sessionJobs, setSessionJobs] = React.useState<ISessionJobs | undefined>();
   const [recentReviewIndex, setRecentReviewIndex] = React.useState<number>(-1);
+  const resultRef = React.useRef<HTMLDivElement>(null);
 
   async function fetchSessionJobs() {
     try {
@@ -132,22 +114,6 @@ export default function PDFReviewerForm() {
     fetchRateLimitInfo();
   }, []);
 
-  React.useEffect(() => {
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    };
-  }, []);
-
-  React.useEffect(() => {
-    return () => {
-      if (progressRef.current) {
-        clearInterval(progressRef.current);
-      }
-    };
-  }, []);
-
   function handlePDFChange(e: React.ChangeEvent<HTMLInputElement>) {
     if (e.target?.files?.[0]) {
       const file = e.target.files[0];
@@ -161,49 +127,6 @@ export default function PDFReviewerForm() {
     setSampleArticleIndex(-1);
   }
 
-  function getReviewDuration(reviewType: string): number {
-    switch (reviewType) {
-      case "barebones":
-        return 10 * 1000; // 10 seconds
-      case "liangetal":
-        return 20 * 1000; // 20 seconds
-      case "multiagent":
-        return 20 * 60 * 1000; // 25 minutes
-      case "mamorx":
-        return 30 * 60 * 1000; // 30 minutes
-      default:
-        return 30 * 1000; // fallback
-    }
-  }
-
-  function simulateProgress(totalDuration: number) {
-    setProgress(0);
-    let elapsed = 0;
-
-    // Clear any existing interval
-    if (progressRef.current) {
-      clearInterval(progressRef.current);
-    }
-
-    progressRef.current = setInterval(() => {
-      elapsed += Math.random() * 1000; // Random increment between 0-1000ms
-
-      if (elapsed >= totalDuration) {
-        setProgress(95); // Cap at 95%
-        if (progressRef.current) {
-          clearInterval(progressRef.current);
-        }
-      } else {
-        // Calculate progress with diminishing returns
-        const newProgress = Math.min(
-          95,
-          (elapsed / totalDuration) * 100 * (1 - elapsed / totalDuration / 2)
-        );
-        setProgress(newProgress);
-      }
-    }, 500 + Math.random() * 1000); // Random interval between 500-1500ms
-  }
-
   async function submitFormToServer(review_type: string) {
     const headers = {
       "Content-Type": "multipart/form-data",
@@ -213,16 +136,6 @@ export default function PDFReviewerForm() {
     formData.append("review_type", review_type);
 
     try {
-      setIsLoading(true);
-      setElapsedTime(0);
-
-      // Start the progress simulation
-      simulateProgress(getReviewDuration(review_type));
-
-      timerRef.current = setInterval(() => {
-        setElapsedTime((prev) => prev + 1);
-      }, 1000);
-
       const res = await axios.post("/api/generate-review", formData, {
         headers: headers,
       });
@@ -239,11 +152,9 @@ export default function PDFReviewerForm() {
         });
       }
 
-      setReviewResult(res.data);
+      fetchSessionJobs();
       setErrorMessage("");
 
-      // When response is received:
-      setProgress(100);
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 429) {
         setReviewResult(undefined);
@@ -256,13 +167,6 @@ export default function PDFReviewerForm() {
         setErrorMessage("Error submitting form.");
       }
     } finally {
-      setIsLoading(false);
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-      if (progressRef.current) {
-        clearInterval(progressRef.current);
-      }
     }
   }
 
@@ -311,20 +215,35 @@ export default function PDFReviewerForm() {
   }
 
   function handleSelectSampleArticle(index: number) {
-    setArticleSource("Sample");
-    setSampleArticleIndex(index);
+    if (articleSource === "Sample" && sampleArticleIndex == index) {
+      resultRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+    else {
+      setArticleSource("Sample");
+      setSampleArticleIndex(index);
+    }
   }
 
   function handleSelectRecentReview(index: number) {
-    setArticleSource("Upload");
-    setRecentReviewIndex(index);
-    setReviewResult(sessionJobs?.jobs[index].result || undefined);
+    if (sessionJobs?.jobs[index].status == "Completed") {
+      if (index == recentReviewIndex) {
+        resultRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }
+      else {
+        setArticleSource("Upload");
+        setRecentReviewIndex(index);
+        setReviewResult(sessionJobs?.jobs[index].result || undefined);
+      }
+    }
+    else {
+      console.error("Selected submission has either expired or hasn't been completed.");
+    }
   }
 
   function renderSessionJobs() {
     return (
-      <Carousel className="w-full max-w-xl " orientation="vertical">
-        <CarouselContent className="content-center">
+      <Carousel className="w-full max-w-xl mt-10" orientation="vertical">
+        <CarouselContent className="content-center -mt-1 h-[300px]">
           {sessionJobs?.jobs.map((job, index) => {
             return (
               <CarouselItem
@@ -342,34 +261,18 @@ export default function PDFReviewerForm() {
                 >
                   <CardHeader className="space-y-4">
                     <div className="flex items-start justify-between gap-4">
-                      <CardTitle className="text-xl font-bold leading-tight">
-                        {`${job.id} (${job.status})`}
+                      <CardTitle className="text-md font-bold leading-tight break-all">
+                        {`${index + 1}. ${job.filename} [${job.review_type}] (${job.status})`}
                       </CardTitle>
                     </div>
-
-                    {/* <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Users className="w-4 h-4" />
-                      <span>{article.authors}</span>
-                    </div> */}
                   </CardHeader>
-                  <CardFooter className="break-all">
-                    <div className="text-sm text-gray-600">
-                      {/* <span className="font-medium">DOI: </span>
-                      <span className="text-blue-600 hover:underline">
-                        <a
-                          href={article.pdf_url}
-                          className="text-wrap underline underline-offset-1"
-                        >
-                          {article.pdf_url}
-                        </a>
-                      </span> */}
-                    </div>
-                  </CardFooter>
                 </Card>
               </CarouselItem>
             );
           })}
         </CarouselContent>
+        <CarouselPrevious />
+        <CarouselNext />
       </Carousel>
     );
   }
@@ -550,9 +453,19 @@ export default function PDFReviewerForm() {
                   <CardDescription>
                     List of result for past submissions
                   </CardDescription>
+                  <Button
+                    className="w-full text-lg row-span-1"
+                    onClick={fetchSessionJobs}
+                  >
+                    Reload Review Status
+                  </Button>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  {renderSessionJobs()}
+                  {sessionJobs?.jobs.length !== 0 ? renderSessionJobs() : (
+                    <p className="text-md">
+                      No recent submissions
+                    </p>
+                  )}
                 </CardContent>
                 <CardFooter>
                 </CardFooter>
@@ -563,49 +476,6 @@ export default function PDFReviewerForm() {
       </Tabs>
     );
   }
-
-  function formatTime(seconds: number): string {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
-  }
-
-  function renderLoadingState() {
-    return (
-      <div className="space-y-4">
-        <div className="flex flex-col items-center justify-center gap-2">
-          <div className="flex items-center gap-2">
-            <Loader2 className="h-6 w-6 animate-spin" />
-            <span className="text-lg font-medium">Generating Review...</span>
-          </div>
-          <div className="w-full space-y-2">
-            <Progress value={progress} className="w-full" />
-            <div className="flex justify-between text-sm text-muted-foreground">
-              <span>Progress: {Math.round(progress)}%</span>
-              <span>Time elapsed: {formatTime(elapsedTime)}</span>
-            </div>
-          </div>
-        </div>
-
-        <Alert variant="destructive" className="bg-yellow-50 border-yellow-500">
-          <AlertTriangle className="h-5 w-5" />
-          <AlertTitle>Please do not close or reload this page</AlertTitle>
-          <AlertDescription>
-            Multi-agent reviews can take up to 15 minutes to generate. Closing
-            or reloading the page will cancel the review generation and your
-            progress will be lost.
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
-
-  const reviewTypes = [
-    { value: "barebones", label: "Barebones Review" },
-    { value: "liangetal", label: "Liang et al. Style" },
-    { value: "multiagent", label: "Multi-agent Review" },
-    { value: "mamorx", label: "MAMORX Review" },
-  ];
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -647,7 +517,7 @@ export default function PDFReviewerForm() {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {reviewTypes.map((type) => (
+                    {REVIEW_TYPE_OPTIONS.map((type) => (
                       <SelectItem key={type.value} value={type.value}>
                         {type.label} (approximately{" "}
                         {formatDuration(getReviewDuration(type.value))})
@@ -674,24 +544,19 @@ export default function PDFReviewerForm() {
           <Button
             type="submit"
             disabled={
-              isLoading ||
               (articleSource === "Upload" &&
                 (rateLimitInfo.remainingUserSubmissions === 0 || !inputFile)) ||
               !form.getValues("review_type")
             }
             className="w-full py-6 text-lg"
           >
-            {isLoading
-              ? "Generating Review..."
-              : articleSource === "Upload" &&
-                rateLimitInfo.remainingUserSubmissions === 0
-                ? "Daily Upload Limit Reached"
-                : articleSource === "Sample"
-                  ? "Show Review"
-                  : "Generate Review"}
+            {articleSource === "Upload" &&
+              rateLimitInfo.remainingUserSubmissions === 0
+              ? "Daily Upload Limit Reached"
+              : articleSource === "Sample"
+                ? "Show Review"
+                : "Generate Review"}
           </Button>
-
-          {isLoading && <div className="mt-4">{renderLoadingState()}</div>}
         </form>
       </Form>
 
@@ -702,7 +567,7 @@ export default function PDFReviewerForm() {
       />
 
       {(reviewResult || errorMessage) && (
-        <div className="mt-8 p-6 bg-secondary rounded-lg">
+        <div className="mt-8 p-6 bg-secondary rounded-lg" ref={resultRef}>
           <h3 className="text-xl font-semibold mb-4">Generated Review</h3>
           <div className="prose max-w-none whitespace-pre-wrap">
             {reviewResult ? renderReviewTabs() : errorMessage}
