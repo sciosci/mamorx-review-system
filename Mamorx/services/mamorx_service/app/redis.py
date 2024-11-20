@@ -58,8 +58,8 @@ def get_job_data_for_session_id(session_id: str) -> Optional[ReviewJobStatus]:
         info_json = redis_client.get(job_id)
         if(info_json != None):
             info = ReviewJobStatus.model_validate_json(info_json)
-            logging.error("Record not found")
         else:
+            logging.error("Record not found")
             info = ReviewJobStatus(
                 id=job_id,
                 status="Expired",
