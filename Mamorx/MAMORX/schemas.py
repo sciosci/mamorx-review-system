@@ -1,8 +1,6 @@
 from pathlib import Path
-from typing import TypedDict, Optional, List, Any
-# from crewai import Crew
-# from crewai.crews.crew_output import CrewOutput
-
+from typing import TypedDict, Optional, List, Any, Literal
+from pydantic import BaseModel
 
 class PDFReviewResult(TypedDict):
     full_path: Path
@@ -82,3 +80,34 @@ class PaperArgument(TypedDict):
 class NoveltyAssessmentResult(TypedDict):
     assessment: str
     summary: str
+
+
+ReviewType = Literal["barebones", "liangetal", "multiagent", "mamorx"]
+
+JobStatus = Literal["Queued", "In-progress", "Completed", "Expired", "Error"]
+
+
+class ReviewJob(BaseModel):
+    id: str #Hash of pdf file
+    session_id: str
+    filename: str
+    review_type: ReviewType
+    pdf_content: bytes
+
+
+class ReviewJobStatus(BaseModel):
+    id: str
+    status: JobStatus
+    filename: str
+    review_type: ReviewType
+    result: Optional[ReviewResult] = None
+
+
+class SessionJobs(BaseModel):
+    count: int
+    jobs: List[ReviewJobStatus]
+
+
+class SessionJobKeys(BaseModel):
+    count: int
+    job_ids: List[str]

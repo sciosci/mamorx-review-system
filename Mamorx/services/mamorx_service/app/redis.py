@@ -1,7 +1,9 @@
+import logging
+
 from redis import Redis
 from typing import List, Optional
 from app.config import settings
-from app.schemas import ReviewJob, ReviewJobStatus, SessionJobKeys
+from MAMORX.schemas import ReviewJob, ReviewJobStatus, SessionJobKeys
 
 redis_client = Redis(host=settings.redis_host, port=settings.redis_port, decode_responses=True)
 
@@ -54,7 +56,17 @@ def get_job_data_for_session_id(session_id: str) -> Optional[ReviewJobStatus]:
     job_data = list()
     for job_id in session_job_data.job_ids:
         info_json = redis_client.get(job_id)
-        info = ReviewJobStatus.model_validate_json(info_json)
+        if(info_json != None):
+            info = ReviewJobStatus.model_validate_json(info_json)
+            logging.error("Record not found")
+        else:
+            info = ReviewJobStatus(
+                id=job_id,
+                status="Expired",
+                filename="",
+                review_type="barebones",
+                result=None
+            )
         job_data.append(info)
 
     return job_data
