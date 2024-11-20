@@ -12,8 +12,7 @@ from time import sleep
 from redis import Redis
 
 from app.config import settings
-from app.schemas import ReviewJob, ReviewJobStatus
-from MAMORX.schemas import APIConfigs, ReviewResult
+from MAMORX.schemas import APIConfigs, ReviewResult, ReviewJob, ReviewJobStatus
 from MAMORX.reviewer_workflow import ReviewerWorkflow
 
 
@@ -64,14 +63,13 @@ def main():
         job_list = redis_client.brpop(keys=[settings.redis_queue_name])
         job = ReviewJob.model_validate_json(job_list[1])
 
-        # Modify pdf content for logging purposes
-        job_print = job.model_copy()
-        job_print.pdf_content = b"abcd"
-
         # Update status of job to In-progress
         #   Get job status record
         job_status_json = redis_client.get(job.id)
-        job_status = ReviewJobStatus.model_validate_json(job_status_json)
+        try:
+            job_status = ReviewJobStatus.model_validate_json(job_status_json)
+        except:
+            print(f"Error parsing job status: {job_status_json}")
         job_status.status = "In-progress"
         #   Save to redis database
         update_result = redis_client.set(job.id, job_status.model_dump_json())
@@ -79,8 +77,6 @@ def main():
         if(update_result == False):
             redis_client.rpush(settings.redis_queue_name, job.model_dump_json())
             continue
-
-        print(job_status_json, update_result)
 
         review_result = ReviewResult(
             review_content="",
@@ -91,7 +87,6 @@ def main():
         try:
             # Save pdf_content to temporary file
             pdf_content = base64.b64decode(job.pdf_content)
-            print(len(pdf_content))
         
             # Save PDF content to temporary file
             with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as temp_pdf:
@@ -99,7 +94,6 @@ def main():
                     temp_pdf.write(pdf_content)
                     temp_pdf.flush()
 
-                    print(temp_pdf.name)
                     # Generate review based on reviewer_workflow
                     review_result = reviewer_workflow.generate_review(
                         pdf_file_path=temp_pdf.name,
@@ -117,11 +111,11 @@ def main():
         job_status.status = "Completed"
         
         #   Save to redis database
-        update_result = redis_client.set(job.id, job_status.model_dump_json())
-        if(update_result == True):
-            print("Success")
+        update_success = redis_client.set(job.id, job_status.model_dump_json())
+        if(update_success == True):
+            logging.info("Success")
         else:
-            print("Failed")
+            logging.info("Failed")
         
         
 
