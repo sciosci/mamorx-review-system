@@ -124,13 +124,14 @@ export async function POST(request: NextRequest) {
     });
 
     const server_response = await axios.post(
-      `${mamorx_service_url}/review/review-pdf-paper?review_type=${encodeURIComponent(
+      `${mamorx_service_url}/review/submit-pdf-to-queue?review_type=${encodeURIComponent(
         review_type
       )}`,
       request_form,
       {
         headers: {
           "Content-Type": "multipart/form-data",
+          "session-id": sessionId
         },
       }
     );

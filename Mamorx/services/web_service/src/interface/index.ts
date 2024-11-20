@@ -15,3 +15,14 @@ export interface PaperReviews {
     multiagent: ReviewResult,
     mamorx: ReviewResult
 };
+
+export interface ReviewJob {
+    id: string,
+    status: "Queued" | "In-progress" | "Completed",
+    result: ReviewResult | null | undefined
+}
+
+export interface SessionJobs {
+    count: number,
+    jobs: ReviewJob[]
+}

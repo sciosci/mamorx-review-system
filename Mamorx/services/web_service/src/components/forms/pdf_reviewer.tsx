@@ -15,7 +15,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { SAMPLE_REVIEWS } from "@/data/sample_reviews";
-import { ReviewResult } from "@/interface";
+import { ReviewResult, SessionJobs } from "@/interface";
 import {
   Carousel,
   CarouselContent,
@@ -96,6 +96,17 @@ export default function PDFReviewerForm() {
   const timerRef = React.useRef<NodeJS.Timeout>();
   const [progress, setProgress] = React.useState(0);
   const progressRef = React.useRef<NodeJS.Timeout>();
+  const [sessionJobs, setSessionJobs] = React.useState<SessionJobs | undefined>();
+  const [recentReviewIndex, setRecentReviewIndex] = React.useState<number>(-1);
+
+  async function fetchSessionJobs() {
+    try {
+      const res = await axios.get("/api/recent-review");
+      setSessionJobs(res.data);
+    } catch (error) {
+      console.error("Error fetching session jobs:", error);
+    }
+  }
 
   async function fetchRateLimitInfo() {
     try {
@@ -117,6 +128,7 @@ export default function PDFReviewerForm() {
   }
 
   React.useEffect(() => {
+    fetchSessionJobs();
     fetchRateLimitInfo();
   }, []);
 
@@ -237,7 +249,7 @@ export default function PDFReviewerForm() {
         setReviewResult(undefined);
         setErrorMessage(
           error.response.data.message ||
-            "You've reached the maximum number of submissions for today. Please try again tomorrow."
+          "You've reached the maximum number of submissions for today. Please try again tomorrow."
         );
       } else {
         setReviewResult(undefined);
@@ -303,6 +315,65 @@ export default function PDFReviewerForm() {
     setSampleArticleIndex(index);
   }
 
+  function handleSelectRecentReview(index: number) {
+    setArticleSource("Upload");
+    setRecentReviewIndex(index);
+    setReviewResult(sessionJobs?.jobs[index].result || undefined);
+  }
+
+  function renderSessionJobs() {
+    return (
+      <Carousel className="w-full max-w-xl " orientation="vertical">
+        <CarouselContent className="content-center">
+          {sessionJobs?.jobs.map((job, index) => {
+            return (
+              <CarouselItem
+                key={job.id}
+                className="content-center md:basis-1/2 lg:basis-1/3"
+              >
+                <Card
+                  className={`mt-2 mb-2 content-center justify-items-center cursor-pointer ${recentReviewIndex == index
+                    ? "border-blue-500 border-2"
+                    : ""
+                    }`}
+                  onClick={() => {
+                    handleSelectRecentReview(index);
+                  }}
+                >
+                  <CardHeader className="space-y-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <CardTitle className="text-xl font-bold leading-tight">
+                        {`${job.id} (${job.status})`}
+                      </CardTitle>
+                    </div>
+
+                    {/* <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Users className="w-4 h-4" />
+                      <span>{article.authors}</span>
+                    </div> */}
+                  </CardHeader>
+                  <CardFooter className="break-all">
+                    <div className="text-sm text-gray-600">
+                      {/* <span className="font-medium">DOI: </span>
+                      <span className="text-blue-600 hover:underline">
+                        <a
+                          href={article.pdf_url}
+                          className="text-wrap underline underline-offset-1"
+                        >
+                          {article.pdf_url}
+                        </a>
+                      </span> */}
+                    </div>
+                  </CardFooter>
+                </Card>
+              </CarouselItem>
+            );
+          })}
+        </CarouselContent>
+      </Carousel>
+    );
+  }
+
   function renderSampleArticleOptions() {
     return (
       <Carousel className="w-full max-w-xl " orientation="vertical">
@@ -314,11 +385,10 @@ export default function PDFReviewerForm() {
                 className="content-center md:basis-1/2 lg:basis-1/3"
               >
                 <Card
-                  className={`mt-2 mb-2 content-center justify-items-center cursor-pointer ${
-                    sampleArticleIndex == index
-                      ? "border-blue-500 border-2"
-                      : ""
-                  }`}
+                  className={`mt-2 mb-2 content-center justify-items-center cursor-pointer ${sampleArticleIndex == index
+                    ? "border-blue-500 border-2"
+                    : ""
+                    }`}
                   onClick={() => {
                     handleSelectSampleArticle(index);
                   }}
@@ -473,7 +543,21 @@ export default function PDFReviewerForm() {
                 />
               </div>
             </CardContent>
-            <CardFooter></CardFooter>
+            <CardFooter>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Recent Reviews</CardTitle>
+                  <CardDescription>
+                    List of result for past submissions
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {renderSessionJobs()}
+                </CardContent>
+                <CardFooter>
+                </CardFooter>
+              </Card>
+            </CardFooter>
           </Card>
         </TabsContent>
       </Tabs>
@@ -539,7 +623,7 @@ export default function PDFReviewerForm() {
                     type="text"
                     {...field}
                     value={inputFile?.name || ""}
-                    onChange={() => {}}
+                    onChange={() => { }}
                   />
                 </FormControl>
                 <FormMessage />
@@ -583,8 +667,8 @@ export default function PDFReviewerForm() {
             {rateLimitInfo.remainingUserSubmissions > 0
               ? `${rateLimitInfo.remainingUserSubmissions} submissions remaining today`
               : `Daily limit reached. Next reset: ${new Date(
-                  rateLimitInfo.nextResetTime!
-                ).toLocaleString()}`}
+                rateLimitInfo.nextResetTime!
+              ).toLocaleString()}`}
           </div>
 
           <Button
@@ -601,10 +685,10 @@ export default function PDFReviewerForm() {
               ? "Generating Review..."
               : articleSource === "Upload" &&
                 rateLimitInfo.remainingUserSubmissions === 0
-              ? "Daily Upload Limit Reached"
-              : articleSource === "Sample"
-              ? "Show Review"
-              : "Generate Review"}
+                ? "Daily Upload Limit Reached"
+                : articleSource === "Sample"
+                  ? "Show Review"
+                  : "Generate Review"}
           </Button>
 
           {isLoading && <div className="mt-4">{renderLoadingState()}</div>}
