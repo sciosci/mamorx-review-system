@@ -19,5 +19,6 @@ class Settings(BaseSettings):
     redis_host: str = "redis"
     redis_port: str = "6379"
     redis_queue_name: str = "review-queue"
+    review_expired_seconds: int = 604800
 
 settings = Settings()
