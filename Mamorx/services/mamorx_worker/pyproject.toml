@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "mamorx-service"
+name = "mamorx-worker"
 version = "0.1.0"
 description = ""
 authors = ["Pawin Taechoyotin <pawin.taechoyotin@gmail.com>"]

@@ -1,6 +1,6 @@
-import { PaperReviews } from "@/interface";
+import { IPaperReviews } from "@/interface";
 
-export const SAMPLE_REVIEWS: PaperReviews[] = [
+export const SAMPLE_REVIEWS: IPaperReviews[] = [
   {
     paper_id: "2407_04025v2",
     title: "Efficient optimization of ODE neuron models using gradient descent",

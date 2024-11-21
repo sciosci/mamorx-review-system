@@ -4,7 +4,6 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
 
 from fastapi import FastAPI
 from app.api.endpoints import info, review
-from app.config import settings
 
 
 app = FastAPI()

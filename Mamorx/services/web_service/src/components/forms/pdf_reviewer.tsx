@@ -1,5 +1,4 @@
 "use client";
-import axios from "axios";
 import React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -15,11 +14,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { SAMPLE_REVIEWS } from "@/data/sample_reviews";
-import { ReviewResult } from "@/interface";
+import { IReviewResult, ISessionJobs, IRateLimitState } from "@/interface";
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
 } from "@/components/ui/carousel";
 import {
   Card,
@@ -39,9 +40,15 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { ConfirmationModal } from "@/components/ui/modal";
-import { ArrowUpRight, Users, Loader2, AlertTriangle } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Progress } from "@/components/ui/progress";
+import { ArrowUpRight, Users, Loader2 } from "lucide-react";
+import { formatDuration, getReviewDuration, isStringInArray } from "@/lib";
+import { REVIEW_TYPE_OPTIONS } from "@/data";
+import { TReviewType } from "@/types";
+import {
+  getSessionJobs,
+  getRateLimitInfo,
+  submitReview
+} from "@/services/mamorx";
 
 const FormSchema = z.object({
   review_type: z.string({
@@ -49,22 +56,6 @@ const FormSchema = z.object({
   }),
   pdf_file: z.any().optional(),
 });
-
-interface RateLimitState {
-  remainingUserSubmissions: number;
-  remainingTotalSubmissions: number;
-  nextResetTime: string | null;
-}
-
-function formatDuration(ms: number): string {
-  if (ms < 60000) {
-    // less than a minute
-    return `${ms / 1000} seconds`;
-  } else {
-    // minutes
-    return `${ms / 60000} minutes`;
-  }
-}
 
 export default function PDFReviewerForm() {
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -74,12 +65,11 @@ export default function PDFReviewerForm() {
     },
   });
   const [inputFile, setInputFile] = React.useState<File>();
-  const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const [showModal, setShowModal] = React.useState(false);
   const [pendingSubmission, setPendingSubmission] = React.useState<z.infer<
     typeof FormSchema
   > | null>(null);
-  const [rateLimitInfo, setRateLimitInfo] = React.useState<RateLimitState>({
+  const [rateLimitInfo, setRateLimitInfo] = React.useState<IRateLimitState>({
     remainingUserSubmissions: 3,
     remainingTotalSubmissions: 500,
     nextResetTime: null,
@@ -89,51 +79,52 @@ export default function PDFReviewerForm() {
   );
   const [sampleArticleIndex, setSampleArticleIndex] = React.useState<number>(0);
   const [reviewResult, setReviewResult] = React.useState<
-    ReviewResult | undefined
+    IReviewResult | undefined
   >(undefined);
   const [errorMessage, setErrorMessage] = React.useState<string>("");
-  const [elapsedTime, setElapsedTime] = React.useState<number>(0);
-  const timerRef = React.useRef<NodeJS.Timeout>();
-  const [progress, setProgress] = React.useState(0);
-  const progressRef = React.useRef<NodeJS.Timeout>();
+  const [sessionJobs, setSessionJobs] = React.useState<ISessionJobs | undefined>();
+  const [recentReviewIndex, setRecentReviewIndex] = React.useState<number>(-1);
+  const resultRef = React.useRef<HTMLDivElement>(null);
+  const [pendingReview, setPendingReview] = React.useState<boolean>(false);
+  const [lastCheckedDate, setLastCheckedDate] = React.useState<Date>(new Date());
+
+  React.useEffect(() => {
+    const reviewStatuses = sessionJobs?.jobs.map(({ status }) => status) || [];
+    if (isStringInArray(reviewStatuses, "Queued") || isStringInArray(reviewStatuses, "In-progress")) {
+      setPendingReview(true);
+    }
+    else {
+      setPendingReview(false);
+    }
+  }, [sessionJobs]);
+
+  React.useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+    if (pendingReview) {
+      intervalId = setInterval(() => fetchSessionJobs(), 10000);
+    }
+
+    return () => clearInterval(intervalId);
+  }, [pendingReview]);
+
+  async function fetchSessionJobs() {
+    const res = await getSessionJobs();
+    if (res.success && res.data) {
+      setSessionJobs(res.data);
+      setLastCheckedDate(new Date());
+    }
+  }
 
   async function fetchRateLimitInfo() {
-    try {
-      const res = await axios.get("/api/generate-review");
-      if (res.headers["x-ratelimit-remaining-user"]) {
-        setRateLimitInfo({
-          remainingUserSubmissions: parseInt(
-            res.headers["x-ratelimit-remaining-user"]
-          ),
-          remainingTotalSubmissions: parseInt(
-            res.headers["x-ratelimit-remaining-total"]
-          ),
-          nextResetTime: res.headers["x-ratelimit-reset"],
-        });
-      }
-    } catch (error) {
-      console.error("Error fetching rate limit info:", error);
+    const res = await getRateLimitInfo();
+    if (res.success && res.data) {
+      setRateLimitInfo(res.data);
     }
   }
 
   React.useEffect(() => {
+    fetchSessionJobs();
     fetchRateLimitInfo();
-  }, []);
-
-  React.useEffect(() => {
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    };
-  }, []);
-
-  React.useEffect(() => {
-    return () => {
-      if (progressRef.current) {
-        clearInterval(progressRef.current);
-      }
-    };
   }, []);
 
   function handlePDFChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -149,108 +140,16 @@ export default function PDFReviewerForm() {
     setSampleArticleIndex(-1);
   }
 
-  function getReviewDuration(reviewType: string): number {
-    switch (reviewType) {
-      case "barebones":
-        return 10 * 1000; // 10 seconds
-      case "liangetal":
-        return 20 * 1000; // 20 seconds
-      case "multiagent":
-        return 20 * 60 * 1000; // 25 minutes
-      case "mamorx":
-        return 30 * 60 * 1000; // 30 minutes
-      default:
-        return 30 * 1000; // fallback
-    }
-  }
-
-  function simulateProgress(totalDuration: number) {
-    setProgress(0);
-    let elapsed = 0;
-
-    // Clear any existing interval
-    if (progressRef.current) {
-      clearInterval(progressRef.current);
-    }
-
-    progressRef.current = setInterval(() => {
-      elapsed += Math.random() * 1000; // Random increment between 0-1000ms
-
-      if (elapsed >= totalDuration) {
-        setProgress(95); // Cap at 95%
-        if (progressRef.current) {
-          clearInterval(progressRef.current);
-        }
-      } else {
-        // Calculate progress with diminishing returns
-        const newProgress = Math.min(
-          95,
-          (elapsed / totalDuration) * 100 * (1 - elapsed / totalDuration / 2)
-        );
-        setProgress(newProgress);
-      }
-    }, 500 + Math.random() * 1000); // Random interval between 500-1500ms
-  }
-
-  async function submitFormToServer(review_type: string) {
-    const headers = {
-      "Content-Type": "multipart/form-data",
-    };
-    const formData = new FormData();
-    formData.append("pdf_file", inputFile as Blob);
-    formData.append("review_type", review_type);
-
-    try {
-      setIsLoading(true);
-      setElapsedTime(0);
-
-      // Start the progress simulation
-      simulateProgress(getReviewDuration(review_type));
-
-      timerRef.current = setInterval(() => {
-        setElapsedTime((prev) => prev + 1);
-      }, 1000);
-
-      const res = await axios.post("/api/generate-review", formData, {
-        headers: headers,
-      });
-
-      if (res.headers["x-ratelimit-remaining-user"]) {
-        setRateLimitInfo({
-          remainingUserSubmissions: parseInt(
-            res.headers["x-ratelimit-remaining-user"]
-          ),
-          remainingTotalSubmissions: parseInt(
-            res.headers["x-ratelimit-remaining-total"]
-          ),
-          nextResetTime: res.headers["x-ratelimit-reset"],
-        });
-      }
-
-      setReviewResult(res.data);
+  async function submitFormToServer(reviewType: TReviewType) {
+    const res = await submitReview(inputFile as Blob, reviewType);
+    if (res.success && res.data) {
+      setRateLimitInfo(res.data.rate_limit_info);
+      fetchSessionJobs();
       setErrorMessage("");
-
-      // When response is received:
-      setProgress(100);
-    } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 429) {
-        setReviewResult(undefined);
-        setErrorMessage(
-          error.response.data.message ||
-            "You've reached the maximum number of submissions for today. Please try again tomorrow."
-        );
-      } else {
-        setReviewResult(undefined);
-        setErrorMessage("Error submitting form.");
-      }
-    } finally {
-      setIsLoading(false);
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-      if (progressRef.current) {
-        clearInterval(progressRef.current);
-      }
+    }
+    else {
+      setReviewResult(undefined);
+      setErrorMessage(res.msg);
     }
   }
 
@@ -293,14 +192,72 @@ export default function PDFReviewerForm() {
 
   async function handleConfirmedSubmit() {
     if (pendingSubmission) {
-      await submitFormToServer(pendingSubmission.review_type);
+      await submitFormToServer(pendingSubmission.review_type as TReviewType);
       setPendingSubmission(null);
     }
   }
 
   function handleSelectSampleArticle(index: number) {
-    setArticleSource("Sample");
-    setSampleArticleIndex(index);
+    if (articleSource === "Sample" && sampleArticleIndex == index) {
+      resultRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+    else {
+      setArticleSource("Sample");
+      setSampleArticleIndex(index);
+    }
+  }
+
+  function handleSelectRecentReview(index: number) {
+    if (sessionJobs?.jobs[index].status == "Completed") {
+      if (index == recentReviewIndex) {
+        resultRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }
+      else {
+        setArticleSource("Upload");
+        setRecentReviewIndex(index);
+        setReviewResult(sessionJobs?.jobs[index].result || undefined);
+      }
+    }
+    else {
+      console.error("Selected submission has either expired or hasn't been completed.");
+    }
+  }
+
+  function renderSessionJobs() {
+    return (
+      <Carousel className="w-full max-w-xl mt-10" orientation="vertical">
+        <CarouselContent className="content-center -mt-1 h-[300px]">
+          {sessionJobs?.jobs.map((job, index) => {
+            return (
+              <CarouselItem
+                key={job.id}
+                className="content-center md:basis-1/2 lg:basis-1/3"
+              >
+                <Card
+                  className={`mt-2 mb-2 content-center justify-items-center cursor-pointer ${recentReviewIndex == index
+                    ? "border-blue-500 border-2"
+                    : ""
+                    }`}
+                  onClick={() => {
+                    handleSelectRecentReview(index);
+                  }}
+                >
+                  <CardHeader className="space-y-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <CardTitle className="text-md font-bold leading-tight break-all">
+                        {`${index + 1}. ${job.filename} [${job.review_type}] (${job.status})`}
+                      </CardTitle>
+                    </div>
+                  </CardHeader>
+                </Card>
+              </CarouselItem>
+            );
+          })}
+        </CarouselContent>
+        <CarouselPrevious />
+        <CarouselNext />
+      </Carousel>
+    );
   }
 
   function renderSampleArticleOptions() {
@@ -314,11 +271,10 @@ export default function PDFReviewerForm() {
                 className="content-center md:basis-1/2 lg:basis-1/3"
               >
                 <Card
-                  className={`mt-2 mb-2 content-center justify-items-center cursor-pointer ${
-                    sampleArticleIndex == index
-                      ? "border-blue-500 border-2"
-                      : ""
-                  }`}
+                  className={`mt-2 mb-2 content-center justify-items-center cursor-pointer ${sampleArticleIndex == index
+                    ? "border-blue-500 border-2"
+                    : ""
+                    }`}
                   onClick={() => {
                     handleSelectSampleArticle(index);
                   }}
@@ -473,55 +429,37 @@ export default function PDFReviewerForm() {
                 />
               </div>
             </CardContent>
-            <CardFooter></CardFooter>
+            <CardFooter>
+              <Card className="w-full">
+                <CardHeader>
+                  <CardTitle>Recent Reviews</CardTitle>
+                  <CardDescription>
+                    List of result for past submissions (last checked at {lastCheckedDate.toLocaleString()})
+                  </CardDescription>
+                  <Button
+                    className="w-full text-lg row-span-1"
+                    onClick={fetchSessionJobs}
+                  >
+                    Reload Review Status
+                    {pendingReview && <Loader2 className="animate-spin" />}
+                  </Button>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {sessionJobs?.jobs.length !== 0 ? renderSessionJobs() : (
+                    <p className="text-md">
+                      No recent submissions
+                    </p>
+                  )}
+                </CardContent>
+                <CardFooter>
+                </CardFooter>
+              </Card>
+            </CardFooter>
           </Card>
         </TabsContent>
       </Tabs>
     );
   }
-
-  function formatTime(seconds: number): string {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
-  }
-
-  function renderLoadingState() {
-    return (
-      <div className="space-y-4">
-        <div className="flex flex-col items-center justify-center gap-2">
-          <div className="flex items-center gap-2">
-            <Loader2 className="h-6 w-6 animate-spin" />
-            <span className="text-lg font-medium">Generating Review...</span>
-          </div>
-          <div className="w-full space-y-2">
-            <Progress value={progress} className="w-full" />
-            <div className="flex justify-between text-sm text-muted-foreground">
-              <span>Progress: {Math.round(progress)}%</span>
-              <span>Time elapsed: {formatTime(elapsedTime)}</span>
-            </div>
-          </div>
-        </div>
-
-        <Alert variant="destructive" className="bg-yellow-50 border-yellow-500">
-          <AlertTriangle className="h-5 w-5" />
-          <AlertTitle>Please do not close or reload this page</AlertTitle>
-          <AlertDescription>
-            Multi-agent reviews can take up to 15 minutes to generate. Closing
-            or reloading the page will cancel the review generation and your
-            progress will be lost.
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
-
-  const reviewTypes = [
-    { value: "barebones", label: "Barebones Review" },
-    { value: "liangetal", label: "Liang et al. Style" },
-    { value: "multiagent", label: "Multi-agent Review" },
-    { value: "mamorx", label: "MAMORX Review" },
-  ];
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -539,7 +477,7 @@ export default function PDFReviewerForm() {
                     type="text"
                     {...field}
                     value={inputFile?.name || ""}
-                    onChange={() => {}}
+                    onChange={() => { }}
                   />
                 </FormControl>
                 <FormMessage />
@@ -563,7 +501,7 @@ export default function PDFReviewerForm() {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {reviewTypes.map((type) => (
+                    {REVIEW_TYPE_OPTIONS.map((type) => (
                       <SelectItem key={type.value} value={type.value}>
                         {type.label} (approximately{" "}
                         {formatDuration(getReviewDuration(type.value))})
@@ -583,31 +521,26 @@ export default function PDFReviewerForm() {
             {rateLimitInfo.remainingUserSubmissions > 0
               ? `${rateLimitInfo.remainingUserSubmissions} submissions remaining today`
               : `Daily limit reached. Next reset: ${new Date(
-                  rateLimitInfo.nextResetTime!
-                ).toLocaleString()}`}
+                rateLimitInfo.nextResetTime!
+              ).toLocaleString()}`}
           </div>
 
           <Button
             type="submit"
             disabled={
-              isLoading ||
               (articleSource === "Upload" &&
                 (rateLimitInfo.remainingUserSubmissions === 0 || !inputFile)) ||
               !form.getValues("review_type")
             }
             className="w-full py-6 text-lg"
           >
-            {isLoading
-              ? "Generating Review..."
-              : articleSource === "Upload" &&
-                rateLimitInfo.remainingUserSubmissions === 0
+            {articleSource === "Upload" &&
+              rateLimitInfo.remainingUserSubmissions === 0
               ? "Daily Upload Limit Reached"
               : articleSource === "Sample"
-              ? "Show Review"
-              : "Generate Review"}
+                ? "Show Review"
+                : "Generate Review"}
           </Button>
-
-          {isLoading && <div className="mt-4">{renderLoadingState()}</div>}
         </form>
       </Form>
 
@@ -618,7 +551,7 @@ export default function PDFReviewerForm() {
       />
 
       {(reviewResult || errorMessage) && (
-        <div className="mt-8 p-6 bg-secondary rounded-lg">
+        <div className="mt-8 p-6 bg-secondary rounded-lg" ref={resultRef}>
           <h3 className="text-xl font-semibold mb-4">Generated Review</h3>
           <div className="prose max-w-none whitespace-pre-wrap">
             {reviewResult ? renderReviewTabs() : errorMessage}
