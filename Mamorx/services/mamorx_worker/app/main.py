@@ -111,7 +111,7 @@ def main():
         job_status.status = "Completed"
         
         #   Save to redis database
-        update_success = redis_client.set(job.id, job_status.model_dump_json())
+        update_success = redis_client.set(job.id, job_status.model_dump_json(), ex=settings.review_expired_seconds)
         if(update_success == True):
             logging.info("Success")
         else:
