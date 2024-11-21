@@ -29,3 +29,14 @@ export function getReviewDuration(reviewType: string): number {
     }
 }
 
+export function isStringInArray(values: string[], key: string)
+{
+    for(const v of values)
+    {
+        if(v === key)
+        {
+            return true;
+        }
+    }
+    return false;
+}

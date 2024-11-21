@@ -1,5 +1,4 @@
 "use client";
-import axios from "axios";
 import React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -41,9 +40,15 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { ConfirmationModal } from "@/components/ui/modal";
-import { ArrowUpRight, Users } from "lucide-react";
-import { formatDuration, getReviewDuration } from "@/lib";
+import { ArrowUpRight, Users, Loader2 } from "lucide-react";
+import { formatDuration, getReviewDuration, isStringInArray } from "@/lib";
 import { REVIEW_TYPE_OPTIONS } from "@/data";
+import { TReviewType } from "@/types";
+import {
+  getSessionJobs,
+  getRateLimitInfo,
+  submitReview
+} from "@/services/mamorx";
 
 const FormSchema = z.object({
   review_type: z.string({
@@ -80,32 +85,40 @@ export default function PDFReviewerForm() {
   const [sessionJobs, setSessionJobs] = React.useState<ISessionJobs | undefined>();
   const [recentReviewIndex, setRecentReviewIndex] = React.useState<number>(-1);
   const resultRef = React.useRef<HTMLDivElement>(null);
+  const [pendingReview, setPendingReview] = React.useState<boolean>(false);
+  const [lastCheckedDate, setLastCheckedDate] = React.useState<Date>(new Date());
+
+  React.useEffect(() => {
+    const reviewStatuses = sessionJobs?.jobs.map(({ status }) => status) || [];
+    if (isStringInArray(reviewStatuses, "Queued") || isStringInArray(reviewStatuses, "In-progress")) {
+      setPendingReview(true);
+    }
+    else {
+      setPendingReview(false);
+    }
+  }, [sessionJobs]);
+
+  React.useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+    if (pendingReview) {
+      intervalId = setInterval(() => fetchSessionJobs(), 10000);
+    }
+
+    return () => clearInterval(intervalId);
+  }, [pendingReview]);
 
   async function fetchSessionJobs() {
-    try {
-      const res = await axios.get("/api/recent-review");
+    const res = await getSessionJobs();
+    if (res.success && res.data) {
       setSessionJobs(res.data);
-    } catch (error) {
-      console.error("Error fetching session jobs:", error);
+      setLastCheckedDate(new Date());
     }
   }
 
   async function fetchRateLimitInfo() {
-    try {
-      const res = await axios.get("/api/generate-review");
-      if (res.headers["x-ratelimit-remaining-user"]) {
-        setRateLimitInfo({
-          remainingUserSubmissions: parseInt(
-            res.headers["x-ratelimit-remaining-user"]
-          ),
-          remainingTotalSubmissions: parseInt(
-            res.headers["x-ratelimit-remaining-total"]
-          ),
-          nextResetTime: res.headers["x-ratelimit-reset"],
-        });
-      }
-    } catch (error) {
-      console.error("Error fetching rate limit info:", error);
+    const res = await getRateLimitInfo();
+    if (res.success && res.data) {
+      setRateLimitInfo(res.data);
     }
   }
 
@@ -127,46 +140,16 @@ export default function PDFReviewerForm() {
     setSampleArticleIndex(-1);
   }
 
-  async function submitFormToServer(review_type: string) {
-    const headers = {
-      "Content-Type": "multipart/form-data",
-    };
-    const formData = new FormData();
-    formData.append("pdf_file", inputFile as Blob);
-    formData.append("review_type", review_type);
-
-    try {
-      const res = await axios.post("/api/generate-review", formData, {
-        headers: headers,
-      });
-
-      if (res.headers["x-ratelimit-remaining-user"]) {
-        setRateLimitInfo({
-          remainingUserSubmissions: parseInt(
-            res.headers["x-ratelimit-remaining-user"]
-          ),
-          remainingTotalSubmissions: parseInt(
-            res.headers["x-ratelimit-remaining-total"]
-          ),
-          nextResetTime: res.headers["x-ratelimit-reset"],
-        });
-      }
-
+  async function submitFormToServer(reviewType: TReviewType) {
+    const res = await submitReview(inputFile as Blob, reviewType);
+    if (res.success && res.data) {
+      setRateLimitInfo(res.data.rate_limit_info);
       fetchSessionJobs();
       setErrorMessage("");
-
-    } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 429) {
-        setReviewResult(undefined);
-        setErrorMessage(
-          error.response.data.message ||
-          "You've reached the maximum number of submissions for today. Please try again tomorrow."
-        );
-      } else {
-        setReviewResult(undefined);
-        setErrorMessage("Error submitting form.");
-      }
-    } finally {
+    }
+    else {
+      setReviewResult(undefined);
+      setErrorMessage(res.msg);
     }
   }
 
@@ -209,7 +192,7 @@ export default function PDFReviewerForm() {
 
   async function handleConfirmedSubmit() {
     if (pendingSubmission) {
-      await submitFormToServer(pendingSubmission.review_type);
+      await submitFormToServer(pendingSubmission.review_type as TReviewType);
       setPendingSubmission(null);
     }
   }
@@ -447,17 +430,18 @@ export default function PDFReviewerForm() {
               </div>
             </CardContent>
             <CardFooter>
-              <Card>
+              <Card className="w-full">
                 <CardHeader>
                   <CardTitle>Recent Reviews</CardTitle>
                   <CardDescription>
-                    List of result for past submissions
+                    List of result for past submissions (last checked at {lastCheckedDate.toLocaleString()})
                   </CardDescription>
                   <Button
                     className="w-full text-lg row-span-1"
                     onClick={fetchSessionJobs}
                   >
                     Reload Review Status
+                    {pendingReview && <Loader2 className="animate-spin" />}
                   </Button>
                 </CardHeader>
                 <CardContent className="space-y-2">

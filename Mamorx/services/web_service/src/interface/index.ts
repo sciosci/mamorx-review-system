@@ -1,3 +1,8 @@
+import {
+    TReviewType,
+    TReviewStatus
+} from "@/types";
+
 export interface IReviewResult {
     review_content: string,
     time_elapsed: number,
@@ -18,9 +23,9 @@ export interface IPaperReviews {
 
 export interface IReviewJob {
     id: string,
-    status: "Queued" | "In-progress" | "Completed" | "Expired" | "Error",
+    status: TReviewStatus,
     filename: string,
-    review_type: "barebones" | "liangetal" | "multiagent" | "mamorx"
+    review_type: TReviewType,
     result: IReviewResult | null | undefined
 }
 
@@ -33,4 +38,27 @@ export interface IRateLimitState {
     remainingUserSubmissions: number;
     remainingTotalSubmissions: number;
     nextResetTime: string | null;
+}
+
+export interface ISubmitReview {
+    job: IReviewJob,
+    rate_limit_info: IRateLimitState
+}
+
+export interface IResponse {
+    success: boolean,
+    data: ISessionJobs | IRateLimitState | ISubmitReview | null,
+    msg: string
+}
+
+export interface ISessionJobsResponse extends IResponse {
+    data: ISessionJobs | null
+}
+
+export interface IRateLimitInfoResponse extends IResponse {
+    data: IRateLimitState | null
+}
+
+export interface ISubmitReviewResponse extends IResponse {
+    data: ISubmitReview | null
 }
