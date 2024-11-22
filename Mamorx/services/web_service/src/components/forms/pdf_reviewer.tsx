@@ -430,30 +430,24 @@ export default function PDFReviewerForm() {
               </div>
             </CardContent>
             <CardFooter>
-              <Card className="w-full">
-                <CardHeader>
-                  <CardTitle>Recent Reviews</CardTitle>
-                  <CardDescription>
-                    List of result for past submissions (last checked at {lastCheckedDate.toLocaleString()})
-                  </CardDescription>
-                  <Button
-                    className="w-full text-lg row-span-1"
-                    onClick={fetchSessionJobs}
-                  >
-                    Reload Review Status
-                    {pendingReview && <Loader2 className="animate-spin" />}
-                  </Button>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {sessionJobs?.jobs.length !== 0 ? renderSessionJobs() : (
-                    <p className="text-md">
-                      No recent submissions
-                    </p>
-                  )}
-                </CardContent>
-                <CardFooter>
-                </CardFooter>
-              </Card>
+              {sessionJobs?.jobs.length !== 0 && (
+                <Card className="w-full">
+                  <CardHeader>
+                    <CardTitle>Recent Reviews</CardTitle>
+                    <CardDescription>
+                      <p>
+                        List of result for past submissions <br />
+                        {pendingReview && <Loader2 className="animate-spin inline" />} last checked at {lastCheckedDate.toLocaleString()} 
+                      </p>
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {renderSessionJobs()}
+                  </CardContent>
+                  <CardFooter>
+                  </CardFooter>
+                </Card>
+              )}
             </CardFooter>
           </Card>
         </TabsContent>
